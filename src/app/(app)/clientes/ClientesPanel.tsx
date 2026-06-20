@@ -216,7 +216,7 @@ function CustomerExpandedRow({
     }
   }
 
-  const waUrl = phone ? buildWaMessage('', {}, phone) : null
+  const waUrl = phone ? `https://wa.me/${phone.replace(/[^0-9]/g, '')}` : null
 
   return (
     <tr className="bg-gradient-to-b from-indigo-50/60 to-white border-b border-indigo-100">
@@ -313,7 +313,7 @@ function CustomerSlideOver({
     const phone = customer.celular || customer.phone
     if (!phone) return
     const body = waTemplateMap['customer_reactivation'] ?? WA_TEMPLATE_BY_CATEGORY['customer_reactivation']?.defaultBody ?? ''
-    const url = buildWaMessage(body, { nombre: customer.name, negocio: brandName }, phone)
+    const url = buildWaMessage(WA_TEMPLATE_BY_CATEGORY["encargo_listo"] || { defaultBody: body }, { nombre: customer.name, negocio: brandName, telefono: phone })
     window.open(url, '_blank')
   }
 
@@ -1029,7 +1029,7 @@ function CustomerSlideOver({
                 {(customer.phone || customer.celular) && (
                   <div className="px-4 pb-3">
                     <a
-                      href={buildWaMessage(getContactMessage(), {}, customer.phone || customer.celular || '')}
+                      href={`https://wa.me/${(customer.phone || customer.celular || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(getContactMessage())}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors"

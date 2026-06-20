@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { brands, establishments } from '@/lib/db/schema'
 import { eq, and } from '@lynkko/db'
-import { AppShell } from '@/components/layout/AppShell'
+import AppShell from '@/components/layout/AppShell'
 import type { AppRole } from '@/components/layout/AppShell'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {

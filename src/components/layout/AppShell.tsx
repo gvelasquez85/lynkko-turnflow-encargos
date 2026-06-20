@@ -1,19 +1,18 @@
 'use client'
+
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { signOut } from '@/lib/auth-client'
 import {
-  Building2, MessageSquare, FileText, Tag, BarChart2,
+  Building2, MessageSquare, Tag, BarChart2,
   Users, Store, Menu, ChevronLeft, ChevronRight, ChevronDown,
   LogOut, LayoutDashboard, X, Eye, ArrowLeft,
-  CalendarClock, ClipboardList, Monitor, UtensilsCrossed,
-  Settings, Shield, UserCircle, CreditCard, Zap, Clock,
-  ShoppingCart, Package, FileCheck, PieChart, TrendingUp, HelpCircle,
-  BookOpen, Receipt, MessageSquareWarning, Building, ToggleRight,
-  Scissors, ShoppingBag, Stethoscope, Briefcase, Shirt, BedDouble, Truck,
-  Tablet,
+  Settings, Shield, CreditCard, Zap, Clock,
+  ShoppingCart, Package, FileCheck, TrendingUp, HelpCircle,
+  Receipt, MessageSquareWarning, Building, ToggleRight,
+  Shirt, Megaphone, Webhook, Key, Mail,
 } from 'lucide-react'
 import { TurnFlowLogo } from '@/components/brand/TurnFlowLogo'
 import { useBrandStore } from '@/stores/brandStore'
@@ -38,10 +37,19 @@ interface NavSection {
   items: NavItem[]
 }
 
-// ─── Item definitions ──────────────────────────────────────────────────────────
+// ─── Item definitions for ENCARGO vertical ────────────────────────────────────
 
 const HOME_ITEM: NavItem = { href: '/dashboard', label: 'Inicio', labelKey: 'nav.home', icon: LayoutDashboard, exact: true }
 
+// Superadmin
+const SUPERADMIN_ITEMS: NavItem[] = [
+  { href: '/superadmin',            label: 'Marcas',               labelKey: 'nav.brands',       icon: Building2, exact: true },
+  { href: '/superadmin/analytics',  label: 'Analytics',                                          icon: BarChart2 },
+  { href: '/superadmin/billing',    label: 'Billing',                                            icon: CreditCard },
+  { href: '/marketplace',           label: 'Marketplace',                                        icon: Zap },
+]
+
+// Brand admin / manager
 const BRAND_ITEMS: NavItem[] = [
   { href: '/configuracion/marca',      label: 'Mi marca',   labelKey: 'nav.brand',    icon: Building2 },
   { href: '/configuracion/sucursales', label: 'Sucursales', labelKey: 'nav.branches', icon: Store, exact: true },
@@ -53,54 +61,37 @@ const MANAGER_BRAND_ITEMS: NavItem[] = [
   { href: '/configuracion/sucursales', label: 'Sucursales', labelKey: 'nav.branches', icon: Store, exact: true },
 ]
 
-const PROMOTIONS_ITEM: NavItem = { href: '/configuracion/promotions', label: 'Promociones', labelKey: 'nav.promotions', icon: Tag }
-
+// Core modules
 const CLIENTES_ITEMS: NavItem[] = [
   { href: '/clientes',                  label: 'Clientes',        labelKey: 'nav.customers', icon: Users },
   { href: '/configuracion/consents',    label: 'Autorizaciones',  labelKey: 'nav.consents',  icon: Shield },
 ]
 
-const QUEUE_ITEMS: NavItem[] = [
-  { href: '/queue',                          label: 'Monitor de colas',    labelKey: 'nav.queueMonitor',  icon: Clock },
-  { href: '/advisor',                        label: 'Cola de espera',      labelKey: 'nav.queue',         icon: LayoutDashboard, exact: true },
-  { href: '/configuracion/visit-reasons',    label: 'Motivos',             labelKey: 'nav.reasons',       icon: MessageSquare },
-  { href: '/configuracion/advisor-fields',   label: 'Campos asesor',       labelKey: 'nav.advisorFields', icon: FileText },
-  { href: '/configuracion/formulario',       label: 'Formulario cliente',  labelKey: 'nav.customerForm',  icon: ClipboardList },
-  { href: '/configuracion/display',          label: 'Pantalla TV',         labelKey: 'nav.tvScreen',      icon: Monitor },
+const ENCARGOS_ITEMS: NavItem[] = [
+  { href: '/encargos', label: 'Órdenes de encargo', icon: Shirt },
 ]
 
-const APPOINTMENTS_ITEMS: NavItem[] = [
-  { href: '/citas',                          label: 'Citas',            labelKey: 'nav.appointments', icon: CalendarClock },
-  { href: '/configuracion/visit-reasons',    label: 'Motivos de visita', labelKey: 'nav.reasons',     icon: MessageSquare },
+const VENTAS_ITEMS: NavItem[] = [
+  { href: '/ventas', label: 'Ventas', labelKey: 'nav.sales', icon: ShoppingCart, exact: true },
 ]
 
+const REPORTES_ITEMS: NavItem[] = [
+  { href: '/reportes/clientes', label: 'Clientes', labelKey: 'nav.customers', icon: Users },
+  { href: '/reportes/ventas',   label: 'Ventas',   labelKey: 'nav.sales',     icon: TrendingUp },
+]
+
+// Config modules
 const MENSAJES_ITEMS: NavItem[] = [
   { href: '/configuracion/mensajes', label: 'Mensajes WhatsApp', icon: MessageSquare },
 ]
 
-const SURVEYS_ITEMS: NavItem[] = [
-  { href: '/configuracion/encuestas', label: 'Encuestas', labelKey: 'nav.surveys', icon: ClipboardList },
+const PROMOTIONS_ITEMS: NavItem[] = [
+  { href: '/configuracion/promotions', label: 'Promociones', icon: Megaphone },
 ]
 
-const MENU_ITEMS: NavItem[] = [
-  { href: '/configuracion/menu', label: 'Menú / Preorden', labelKey: 'nav.menu', icon: UtensilsCrossed },
+const INTEGRACIONES_ITEMS: NavItem[] = [
+  { href: '/configuracion/integraciones', label: 'API Keys & Webhooks', icon: Webhook },
 ]
-
-const VENTAS_ITEMS: NavItem[] = [
-  { href: '/ventas',                          label: 'Ventas',        labelKey: 'nav.sales',     icon: ShoppingCart, exact: true },
-  { href: '/ventas/inventario',               label: 'Inventario',    labelKey: 'nav.inventory', icon: Package },
-  { href: '/ventas/cotizaciones',             label: 'Cotizaciones',  labelKey: 'nav.quotes',    icon: FileCheck, exact: true },
-  { href: '/ventas/cotizaciones/personalizar', label: 'Personalizar', labelKey: 'nav.customize', icon: PieChart },
-]
-
-const REPORTES_ITEMS_BASE: NavItem[] = [
-  { href: '/reportes/clientes', label: 'Clientes', labelKey: 'nav.customers', icon: Users },
-]
-
-const REPORTES_QUEUE_ITEM:       NavItem = { href: '/reportes/atencion',    label: 'Atención',     labelKey: 'nav.attention', icon: Clock }
-const REPORTES_VENTAS_ITEM:      NavItem = { href: '/reportes/ventas',      label: 'Ventas',       labelKey: 'nav.sales',     icon: TrendingUp }
-const REPORTES_PRODUCTOS_ITEM:   NavItem = { href: '/reportes/productos',   label: 'Productos',    labelKey: 'nav.products',  icon: Package }
-const REPORTES_COTIZACIONES_ITEM: NavItem = { href: '/reportes/cotizaciones', label: 'Cotizaciones', labelKey: 'nav.quotes',  icon: FileCheck }
 
 // ─── Section builder ────────────────────────────────────────────────────────────
 
@@ -112,89 +103,32 @@ function buildSections(
     return [{ key: 'reportes', section: 'Reportes', items: [{ href: '/reportes', label: 'Reportes', icon: BarChart2 }] }]
   }
 
-  if (role === 'advisor') {
-    const advisorSections: NavSection[] = []
-    if (activeModules?.queue === true) {
-      advisorSections.push({
-        key: 'colas', section: 'Colas de espera', sectionKey: 'section.queues',
-        items: [{ href: '/advisor', label: 'Cola de espera', labelKey: 'nav.queue', icon: LayoutDashboard, exact: true }],
-      })
-    }
-    if (activeModules?.appointments === true) {
-      advisorSections.push({ key: 'citas', section: 'Citas', sectionKey: 'section.appointments', items: APPOINTMENTS_ITEMS })
-    }
-    if (activeModules?.surveys === true) {
-      advisorSections.push({ key: 'encuestas', section: 'Encuestas', sectionKey: 'section.surveys', items: SURVEYS_ITEMS })
-    }
-    if (activeModules?.menu === true) {
-      advisorSections.push({ key: 'menu_preorden', section: 'Menú / Preorden', sectionKey: 'section.menu', items: MENU_ITEMS })
-    }
-    const clientesItems = activeModules?.queue ? CLIENTES_ITEMS : CLIENTES_ITEMS.filter(i => i.href !== '/configuracion/consents')
-    advisorSections.push({ key: 'clientes', section: 'Clientes', sectionKey: 'section.clients', items: clientesItems })
-    advisorSections.push({ key: 'ventas', section: 'Ventas', sectionKey: 'section.sales', items: VENTAS_ITEMS })
-    return [{ key: 'home', section: 'Inicio', sectionKey: 'nav.home', items: [HOME_ITEM] }, ...advisorSections]
-  }
-
   if (role === 'superadmin') {
     return [
       {
         key: 'admin', section: 'Administración', sectionKey: 'section.admin',
-        items: [
-          { href: '/superadmin',            label: 'Marcas',               labelKey: 'nav.brands',       icon: Building2, exact: true },
-          { href: '/superadmin/analytics',  label: 'Analytics',                                          icon: BarChart2 },
-          { href: '/marketplace',           label: 'Marketplace',                                        icon: Zap },
-          { href: '/configuracion',         label: 'Configuración',        labelKey: 'nav.settings',     icon: Settings },
-        ],
+        items: SUPERADMIN_ITEMS,
       },
       { key: 'marca',    section: 'Mi Marca',  sectionKey: 'section.myBrand', items: BRAND_ITEMS },
       { key: 'clientes', section: 'Clientes',  sectionKey: 'section.clients', items: CLIENTES_ITEMS },
-      { key: 'colas',    section: 'Colas de espera', sectionKey: 'section.queues', items: [...QUEUE_ITEMS, PROMOTIONS_ITEM] },
-      { key: 'citas',    section: 'Citas',     sectionKey: 'section.appointments', items: APPOINTMENTS_ITEMS },
-      { key: 'encuestas', section: 'Encuestas', sectionKey: 'section.surveys', items: SURVEYS_ITEMS },
-      { key: 'menu_preorden', section: 'Menú / Preorden', sectionKey: 'section.menu', items: MENU_ITEMS },
-      { key: 'ventas',   section: 'Ventas',    sectionKey: 'section.sales', items: VENTAS_ITEMS },
+      { key: 'encargos', section: 'Encargos',  items: ENCARGOS_ITEMS },
+      { key: 'ventas',   section: 'Ventas',    sectionKey: 'section.sales',   items: VENTAS_ITEMS },
       { key: 'mensajes', section: 'Mensajes',  items: MENSAJES_ITEMS },
-      {
-        key: 'reportes', section: 'Reportes', sectionKey: 'section.reportsSection', items: [
-          ...REPORTES_ITEMS_BASE,
-          REPORTES_QUEUE_ITEM,
-          REPORTES_VENTAS_ITEM,
-          REPORTES_PRODUCTOS_ITEM,
-          REPORTES_COTIZACIONES_ITEM,
-        ],
-      },
-      { key: 'contabilidad', section: 'Contabilidad', items: [{ href: '/contabilidad', label: 'Contabilidad NIIF', icon: BookOpen }] },
-      { key: 'facturacion',  section: 'Facturación',  items: [{ href: '/facturacion',  label: 'Facturación DIAN', icon: Receipt }] },
-      { key: 'pqrs',         section: 'PQRS',         items: [{ href: '/pqrs',         label: 'Gestión PQRS',    icon: MessageSquareWarning }] },
-      { key: 'copropiedades', section: 'Copropiedades', items: [{ href: '/copropiedades', label: 'Copropiedades', icon: Building }] },
+      { key: 'promotions', section: 'Promociones', items: PROMOTIONS_ITEMS },
+      { key: 'reportes', section: 'Reportes', sectionKey: 'section.reportsSection', items: REPORTES_ITEMS },
+      { key: 'integraciones', section: 'Integraciones', items: INTEGRACIONES_ITEMS },
     ]
   }
 
   // brand_admin / manager
   const brandItems = role === 'brand_admin' ? BRAND_ITEMS : MANAGER_BRAND_ITEMS
 
-  const clientesFiltered = activeModules?.queue
-    ? CLIENTES_ITEMS
-    : CLIENTES_ITEMS.filter(i => i.href !== '/configuracion/consents')
-
   const sections: NavSection[] = [
     { key: 'home',     section: 'Inicio',    sectionKey: 'nav.home',         items: [HOME_ITEM] },
     { key: 'marca',    section: 'Mi Marca',  sectionKey: 'section.myBrand',  items: brandItems },
-    { key: 'clientes', section: 'Clientes',  sectionKey: 'section.clients',  items: clientesFiltered },
+    { key: 'clientes', section: 'Clientes',  sectionKey: 'section.clients',  items: CLIENTES_ITEMS },
+    { key: 'encargos', section: 'Encargos',  items: ENCARGOS_ITEMS },
   ]
-
-  if (activeModules?.queue) {
-    sections.push({ key: 'colas', section: 'Colas de espera', sectionKey: 'section.queues', items: [...QUEUE_ITEMS, PROMOTIONS_ITEM] })
-  }
-  if (activeModules?.appointments) {
-    sections.push({ key: 'citas', section: 'Citas', sectionKey: 'section.appointments', items: APPOINTMENTS_ITEMS })
-  }
-  if (activeModules?.surveys) {
-    sections.push({ key: 'encuestas', section: 'Encuestas', sectionKey: 'section.surveys', items: SURVEYS_ITEMS })
-  }
-  if (activeModules?.menu) {
-    sections.push({ key: 'menu_preorden', section: 'Menú / Preorden', sectionKey: 'section.menu', items: MENU_ITEMS })
-  }
 
   sections.push({ key: 'ventas', section: 'Ventas', sectionKey: 'section.sales', items: VENTAS_ITEMS })
 
@@ -202,58 +136,23 @@ function buildSections(
     sections.push({ key: 'mensajes', section: 'Mensajes', items: MENSAJES_ITEMS })
   }
 
-  const reportesItems: NavItem[] = [...REPORTES_ITEMS_BASE]
-  if (activeModules?.queue) reportesItems.push(REPORTES_QUEUE_ITEM)
-  reportesItems.push(REPORTES_VENTAS_ITEM, REPORTES_PRODUCTOS_ITEM, REPORTES_COTIZACIONES_ITEM)
-  sections.push({ key: 'reportes', section: 'Reportes', sectionKey: 'section.reportsSection', items: reportesItems })
+  sections.push({ key: 'reportes', section: 'Reportes', sectionKey: 'section.reportsSection', items: REPORTES_ITEMS })
 
-  if (activeModules?.contabilidad) {
-    sections.push({ key: 'contabilidad', section: 'Contabilidad', items: [{ href: '/contabilidad', label: 'Contabilidad NIIF', icon: BookOpen }] })
-  }
-  if (activeModules?.facturacion) {
-    sections.push({ key: 'facturacion', section: 'Facturación', items: [{ href: '/facturacion', label: 'Facturación DIAN', icon: Receipt }] })
-  }
-  if (activeModules?.pqrs) {
-    sections.push({ key: 'pqrs', section: 'PQRS', items: [{ href: '/pqrs', label: 'Gestión PQRS', icon: MessageSquareWarning }] })
-  }
-  if (activeModules?.copropiedades) {
-    sections.push({ key: 'copropiedades', section: 'Copropiedades', items: [{ href: '/copropiedades', label: 'Copropiedades', icon: Building }] })
+  if (activeModules?.integraciones) {
+    sections.push({ key: 'integraciones', section: 'Integraciones', items: INTEGRACIONES_ITEMS })
   }
 
-  // Vertical-specific sections
-  if ((activeModules as any)?.__vertical === 'belleza') {
-    sections.push({ key: 'belleza', section: 'Belleza', items: [{ href: '/belleza', label: 'Servicios & Equipo', icon: Scissors }] })
-  }
-  if ((activeModules as any)?.__vertical === 'tienda') {
-    sections.push({ key: 'tienda', section: 'Tienda', items: [{ href: '/tienda', label: 'Inventario & Precios', icon: ShoppingBag }] })
-  }
-  if ((activeModules as any)?.__vertical === 'restaurante') {
-    sections.push({ key: 'restaurante', section: 'Restaurante', items: [{ href: '/restaurante', label: 'Mesas & Cocina', icon: UtensilsCrossed }] })
-  }
-  if ((activeModules as any)?.__vertical === 'salud') {
-    sections.push({ key: 'salud', section: 'Salud', items: [{ href: '/salud', label: 'Historias & Pacientes', icon: Stethoscope }] })
-  }
-  if ((activeModules as any)?.__vertical === 'consultoria') {
-    sections.push({ key: 'consultoria', section: 'Consultoría', items: [{ href: '/consultoria', label: 'Proyectos & Horas', icon: Briefcase }] })
-  }
-  if ((activeModules as any)?.__vertical === 'encargos') {
-    sections.push({ key: 'encargos', section: 'Encargos', items: [{ href: '/encargos', label: 'Órdenes & Servicios', icon: Shirt }] })
-  }
-  if ((activeModules as any)?.__vertical === 'dropshipping') {
-    sections.push({ key: 'dropshipping', section: 'Dropshipping', items: [{ href: '/dropshipping', label: 'Proveedores & Pedidos', icon: Truck }] })
-  }
-  if ((activeModules as any)?.__vertical === 'hospitalidad') {
-    sections.push({ key: 'hospitalidad', section: 'Hospitalidad', items: [{ href: '/hospitalidad', label: 'Habitaciones & Reservas', icon: BedDouble }] })
+  // Marketplace siempre visible para brand_admin
+  if (role === 'brand_admin') {
+    sections.push({
+      key: 'marketplace', section: 'Más', sectionKey: 'section.more',
+      items: [
+        { href: '/marketplace', label: 'Marketplace', icon: Zap },
+        { href: '/ayuda',       label: 'Centro de Ayuda', icon: HelpCircle },
+      ],
+    })
   }
 
-  const masItems: NavItem[] = [
-    { href: '/marketplace', label: 'Marketplace', icon: Zap },
-    { href: '/ayuda',       label: 'Centro de Ayuda', icon: HelpCircle },
-  ]
-  if ((activeModules as any)?.integraciones) {
-    masItems.push({ href: '/configuracion/integraciones', label: 'Integraciones', icon: ToggleRight })
-  }
-  sections.push({ key: 'marketplace', section: 'Más', sectionKey: 'section.more', items: masItems })
   return sections
 }
 
@@ -335,7 +234,7 @@ function AppShellInner({
   function startImpersonate() {
     document.cookie = 'ta_view_as=advisor; path=/; max-age=7200'
     setViewAs('advisor')
-    router.push('/advisor')
+    router.push('/dashboard')
   }
 
   function stopImpersonate() {
@@ -499,29 +398,16 @@ function AppShellInner({
                             tablet ? 'px-3 py-3 text-base' : 'px-2 py-2 text-sm',
                             isCollapsed && 'justify-center',
                             active
-                              ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-medium'
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100',
+                              ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium'
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200',
                           )}
                         >
-                          <Icon size={tablet ? 20 : 17} className="shrink-0" />
-                          {!isCollapsed && <span>{item.labelKey ? t(item.labelKey, item.label) : item.label}</span>}
+                          <Icon size={tablet ? 22 : 18} className="shrink-0" />
+                          {!isCollapsed && <span className="truncate">{item.labelKey ? t(item.labelKey, item.label) : item.label}</span>}
+                          {isCollapsed && <span className="sr-only">{item.labelKey ? t(item.labelKey, item.label) : item.label}</span>}
                         </Link>
                       )
                     })}
-                    {section.key === 'colas' && CAN_IMPERSONATE.includes(role) && !viewAs && (
-                      <button
-                        onClick={startImpersonate}
-                        title={isCollapsed ? 'Ver como agente' : undefined}
-                        className={cn(
-                          'flex items-center gap-3 rounded-xl text-indigo-500 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 w-full transition-colors',
-                          tablet ? 'px-3 py-3 text-base' : 'px-2 py-2 text-sm',
-                          isCollapsed && 'justify-center',
-                        )}
-                      >
-                        <Eye size={tablet ? 20 : 17} className="shrink-0" />
-                        {!isCollapsed && <span>Ver como agente</span>}
-                      </button>
-                    )}
                   </div>
                 )}
               </div>
@@ -530,175 +416,120 @@ function AppShellInner({
         </nav>
 
         {/* Footer */}
-        <div className="shrink-0 border-t border-gray-100 dark:border-gray-800 p-2">
-          {activeRole === 'advisor' && establishmentSlug && activeModules?.queue === true && (
-            <a
-              href={`/display/${establishmentSlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={isCollapsed ? 'Pantalla TV' : undefined}
-              className={cn(
-                'flex items-center gap-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400 w-full transition-colors mb-1',
-                tablet ? 'px-3 py-3 text-base' : 'px-2 py-2 text-sm',
-                isCollapsed && 'justify-center',
-              )}
-            >
-              <Monitor size={tablet ? 18 : 15} />
-              {!isCollapsed && <span>Pantalla TV</span>}
-            </a>
+        <div className="shrink-0 border-t border-gray-100 dark:border-gray-800 p-3">
+          {!isCollapsed && (
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                <UserCircle size={18} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{fullName || email}</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400">{roleLabel[activeRole]}</p>
+              </div>
+            </div>
           )}
-          {viewAs === 'advisor' && (
+          <div className="flex items-center gap-1">
+            {CAN_IMPERSONATE.includes(role) && !viewAs && (
+              <button
+                onClick={startImpersonate}
+                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                title="Ver como asesor"
+              >
+                <Eye size={13} />
+                {!isCollapsed && 'Ver como asesor'}
+              </button>
+            )}
+            {viewAs && (
+              <button
+                onClick={viewAs === 'brand_admin' ? stopBrandManager : stopImpersonate}
+                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+              >
+                <ArrowLeft size={13} />
+                {!isCollapsed && 'Volver'}
+              </button>
+            )}
             <button
-              onClick={stopImpersonate}
-              title={isCollapsed ? 'Salir de vista asesor' : undefined}
-              className={cn(
-                'flex items-center gap-2 rounded-xl text-amber-600 dark:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 w-full transition-colors',
-                tablet ? 'px-3 py-3 text-base' : 'px-2 py-2 text-sm',
-                isCollapsed && 'justify-center',
-              )}
+              onClick={handleLogout}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-300 transition-colors"
             >
-              <Eye size={tablet ? 18 : 15} />
-              {!isCollapsed && <span>Salir de vista asesor</span>}
+              <LogOut size={13} />
+              {!isCollapsed && 'Salir'}
             </button>
-          )}
-          {viewAs === 'brand_admin' && role === 'superadmin' && (
-            <button
-              onClick={stopBrandManager}
-              title={isCollapsed ? 'Volver a Superadmin' : undefined}
-              className={cn(
-                'flex items-center gap-2 rounded-xl text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 w-full transition-colors',
-                tablet ? 'px-3 py-3 text-base' : 'px-2 py-2 text-sm',
-                isCollapsed && 'justify-center',
-              )}
-            >
-              <ArrowLeft size={15} />
-              {!isCollapsed && <span>Volver a Superadmin</span>}
-            </button>
-          )}
+          </div>
         </div>
       </>
     )
   }
 
-  const sidebarW = collapsed ? 'w-16' : tablet ? 'w-64' : 'w-56'
-  const mainML  = collapsed ? 'md:ml-16' : tablet ? 'md:ml-64' : 'md:ml-56'
-  const topbarH = tablet ? 'h-16' : 'h-14'
-
   return (
-    <div className="min-h-screen flex bg-gray-50 dark:bg-gray-950">
+    <div className={cn('flex h-screen bg-gray-50 dark:bg-gray-950', tablet && 'max-w-[1024px] mx-auto border-x border-gray-200 dark:border-gray-800')}>
       {/* Desktop sidebar */}
       <aside className={cn(
-        'fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex-col z-30 transition-all duration-200 hidden md:flex overflow-hidden',
-        sidebarW,
+        'hidden md:flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all shrink-0',
+        collapsed ? 'w-16' : 'w-60',
       )}>
         <SidebarContent />
       </aside>
 
-      {/* Mobile overlay */}
+      {/* Mobile sidebar overlay */}
       {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-20 md:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
+          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-900 flex flex-col shadow-xl">
+            <SidebarContent mobile />
+          </aside>
+        </div>
       )}
 
-      {/* Mobile sidebar */}
-      <aside className={cn(
-        'fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col z-30 transition-transform duration-200 md:hidden overflow-hidden',
-        tablet ? 'w-72' : 'w-64',
-        mobileOpen ? 'translate-x-0' : '-translate-x-full',
-      )}>
-        <SidebarContent mobile />
-      </aside>
-
       {/* Main content */}
-      <main className={cn(
-        'flex-1 min-h-screen transition-all duration-200 overflow-x-hidden',
-        mainML,
-      )}>
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <div className={cn(
-          'sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-4 flex items-center justify-between transition-all duration-200',
-          topbarH,
-        )}>
-          {/* Left: mobile hamburger + logo */}
-          <div className="flex items-center gap-3 md:hidden">
+        <header className="h-14 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shrink-0">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
-              className={cn('rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400', tablet ? 'p-3' : 'p-2')}
+              className="md:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
             >
-              <Menu size={tablet ? 24 : 20} />
+              <Menu size={20} />
             </button>
-            <TurnFlowLogo size={24} />
-            <span className="font-bold text-gray-900 dark:text-gray-100 text-sm">TurnFlow</span>
+            <div>
+              <h1 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {brandName || 'TurnFlow Encargos'}
+              </h1>
+              {subtitle && <p className="text-[11px] text-gray-500 dark:text-gray-400">{subtitle}</p>}
+            </div>
           </div>
-          <div className="hidden md:block" />
-
-          {/* Right: profile + actions */}
           <div className="flex items-center gap-2">
-            {role === 'superadmin' && (
-              <select
-                value={lang}
-                onChange={e => setLang(e.target.value as LangCode)}
-                className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2 py-1.5 text-xs text-gray-500 dark:text-gray-400 focus:border-indigo-400 focus:outline-none cursor-pointer"
-                title="Idioma / Language"
-              >
-                {SUPPORTED_LANGUAGES.map(l => (
-                  <option key={l.code} value={l.code}>{l.label}</option>
-                ))}
-              </select>
-            )}
-
-            <button
-              onClick={toggleLayoutMode}
-              title={tablet ? 'Cambiar a modo compacto' : 'Cambiar a modo tablet'}
-              className={cn(
-                'rounded-lg transition-colors flex items-center gap-1.5',
-                tablet ? 'p-2.5' : 'p-2',
-                tablet
-                  ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-900/60'
-                  : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300',
-              )}
+            {/* Language selector */}
+            <select
+              value={lang}
+              onChange={e => setLang(e.target.value as LangCode)}
+              className="text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2 py-1 text-gray-600 dark:text-gray-400"
             >
-              <Tablet size={tablet ? 20 : 17} />
-            </button>
-
-            <Link
-              href="/profile"
-              className={cn(
-                'flex items-center gap-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors',
-                tablet ? 'px-3 py-2' : 'px-2 py-1.5',
-              )}
-            >
-              <UserCircle size={tablet ? 24 : 20} className="text-gray-400 dark:text-gray-500 shrink-0" />
-              <span className={cn('font-medium text-gray-700 dark:text-gray-300 hidden sm:inline truncate max-w-[140px]', tablet ? 'text-base' : 'text-sm')}>
-                {fullName || email}
-              </span>
-            </Link>
-            <button
-              onClick={handleLogout}
-              title="Cerrar sesión"
-              className={cn(
-                'rounded-lg text-gray-400 dark:text-gray-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors',
-                tablet ? 'p-2.5' : 'p-2',
-              )}
-            >
-              <LogOut size={tablet ? 20 : 17} />
-            </button>
+              {SUPPORTED_LANGUAGES.map(l => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
           </div>
-        </div>
-        <div className={cn('transition-all duration-200', tablet ? 'p-4 md:p-6' : 'p-4 md:p-6 lg:p-8')}>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto">
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }
 
-export function AppShell(props: AppShellProps) {
+function UserCircle(props: React.SVGProps<SVGSVGElement> & { size?: number }) {
   return (
-    <I18nProvider initialLang={props.lang}>
-      <AppShellInner {...props} />
-    </I18nProvider>
+    <svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <circle cx="12" cy="8" r="5" /><path d="M20 21a8 8 0 0 0-16 0" />
+    </svg>
   )
+}
+
+export default function AppShell(props: AppShellProps) {
+  return <I18nProvider><AppShellInner {...props} /></I18nProvider>
 }

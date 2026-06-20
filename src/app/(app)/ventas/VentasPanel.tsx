@@ -203,8 +203,8 @@ export default function VentasPanel({
       fecha,
       vencimiento,
     }
-    const body = waTemplateMap[category] ?? WA_TEMPLATE_BY_CATEGORY[category]?.defaultBody ?? ''
-    const url = buildWaMessage(body, vars, phone)
+    const body = waTemplateMap[category] ?? WA_TEMPLATE_BY_CATEGORY[category as keyof typeof WA_TEMPLATE_BY_CATEGORY]?.defaultBody ?? ''
+    const url = (() => { let msg = (WA_TEMPLATE_BY_CATEGORY["sale_receipt"]?.defaultBody || body); for (const [k,v] of Object.entries(vars)) { msg = msg.replace(new RegExp(`{{${k}}}`, "g"), v); } return `https://wa.me/${vars.phone?.replace(/[^0-9]/g, "") || ""}?text=${encodeURIComponent(msg)}`; })()
     window.open(url, '_blank')
   }
 

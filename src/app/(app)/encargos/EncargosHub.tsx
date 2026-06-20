@@ -545,14 +545,12 @@ function EncargoCard({ encargo, onUpdate }: { encargo: Encargo; onUpdate: (e: En
         if (phone) {
           const tmplDef = WA_TEMPLATE_DEFS.find(t => t.category === 'encargo_listo')
           const template = tmplDef?.defaultBody ?? ''
-          const waUrl = buildWaMessage(template, {
-            nombre: encargo.customerName ?? 'Cliente',
-            negocio: '',
-            articulo: encargo.itemDescription,
-            codigo: encargo.orderCode,
-            total: fmtCOP(Number(encargo.price)),
-            link: portalUrl,
-          }, phone)
+          let msg = template
+          msg = msg.replace(/{{nombre}}/g, encargo.customerName ?? 'Cliente')
+          msg = msg.replace(/{{articulo}}/g, encargo.itemDescription)
+          msg = msg.replace(/{{codigo}}/g, encargo.orderCode)
+          msg = msg.replace(/{{total}}/g, fmtCOP(Number(encargo.price)))
+          const waUrl = `https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(msg)}`
           window.open(waUrl, '_blank')
         }
       }
