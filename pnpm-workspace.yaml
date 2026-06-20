@@ -1,0 +1,11 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@lynkko/db@0.1.0'
+  - '@lynkko/email@0.1.0'
+  - '@lynkko/push@0.1.0'
+  - '@lynkko/utils@0.1.0'
+  - '@lynkko/webhooks@0.1.0'
+  - '@lynkko/wompi@0.1.0'

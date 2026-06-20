@@ -1,0 +1,52 @@
+{
+  "name": "lynkko-turnflow-encargos",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node --env-file=.env.local node_modules/.bin/drizzle-kit migrate",
+    "db:studio": "node --env-file=.env.local node_modules/.bin/drizzle-kit studio",
+    "db:push": "node --env-file=.env.local node_modules/.bin/drizzle-kit push"
+  },
+  "dependencies": {
+    "@lynkko/db": "latest",
+    "@lynkko/email": "latest",
+    "@lynkko/push": "latest",
+    "@lynkko/utils": "latest",
+    "@lynkko/webhooks": "latest",
+    "@lynkko/wompi": "latest",
+    "better-auth": "^1.2.7",
+    "drizzle-orm": "^0.44.1",
+    "lucide-react": "^0.511.0",
+    "next": "^15.3.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hook-form": "^7.57.0",
+    "@hookform/resolvers": "^3.10.0",
+    "recharts": "^2.15.3",
+    "tailwind-merge": "^3.3.0",
+    "zod": "^3.24.4",
+    "zustand": "^5.0.5",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.1",
+    "eslint": "^9",
+    "eslint-config-next": "^15.3.3",
+    "postgres": "^3.4.5",
+    "sharp": "^0.34.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
