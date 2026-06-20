@@ -58,6 +58,18 @@ export const auth = betterAuth({
     },
   },
 
+  cookies: {
+    sessionToken: {
+      name: 'better-auth.session_token',
+      attributes: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
+
   trustedOrigins: [
     process.env.NEXT_PUBLIC_APP_URL,
     process.env.BETTER_AUTH_URL,

@@ -25,33 +25,30 @@ export function OnboardingWizard({ userName }: Props) {
   const [estabName, setEstabName]     = useState('')
   const [address, setAddress]         = useState('')
 
+  function generateSlug(value: string) {
+    return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  }
+
   async function handleFinish() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/admin/setup', {
+      const slug = generateSlug(brandName)
+      const res = await fetch('/api/admin/brand', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          brandName,
+          name: brandName,
+          slug,
           businessType,
-          establishmentName: estabName,
-          address,
         }),
       })
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        setError((data as { error?: string }).error ?? 'Error al configurar')
+        setError((data as { error?: string }).error ?? 'Error al crear el negocio')
         setLoading(false)
         return
       }
-
-      const setupData = await res.json().catch(() => ({}))
-      console.log('[onboarding] setup ok:', setupData)
-
-      // Verify session sees brandId before redirecting
-      const dbg = await fetch('/api/debug/me').then(r => r.json()).catch(e => ({ error: String(e) }))
-      console.log('[onboarding] debug/me after setup:', dbg)
 
       window.location.href = '/dashboard'
     } catch (e) {
