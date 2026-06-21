@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Package, Clock, DollarSign, Search, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 interface Service {
   id: string
@@ -27,73 +26,30 @@ export default function ServicesManager({ services: initialServices }: ServicesM
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Sync with server when initialServices changes
-  useEffect(() => {
-    setServices(initialServices)
-  }, [initialServices])
+  useEffect(() => { setServices(initialServices) }, [initialServices])
 
   const filtered = services.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     (s.description || '').toLowerCase().includes(search.toLowerCase())
   )
 
-  function openNew() {
-    setForm({ name: '', description: '', price: '', durationDays: 3 })
-    setEditing(null)
-    setError('')
-    setShowForm(true)
-  }
-
-  function openEdit(s: Service) {
-    setForm({ name: s.name, description: s.description || '', price: s.price, durationDays: s.durationDays })
-    setEditing(s)
-    setError('')
-    setShowForm(true)
-  }
+  function openNew() { setForm({ name: '', description: '', price: '', durationDays: 3 }); setEditing(null); setError(''); setShowForm(true) }
+  function openEdit(s: Service) { setForm({ name: s.name, description: s.description || '', price: s.price, durationDays: s.durationDays }); setEditing(s); setError(''); setShowForm(true) }
 
   async function handleSave() {
-    if (!form.name.trim() || !form.price) {
-      setError('Nombre y precio son requeridos')
-      return
-    }
-    setSaving(true)
-    setError('')
+    if (!form.name.trim() || !form.price) { setError('Nombre y precio son requeridos'); return }
+    setSaving(true); setError('')
     try {
-      const res = await fetch(editing ? `/api/admin/servicios/${editing.id}` : '/api/admin/servicios', {
-        method: editing ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          price: parseFloat(form.price),
-        }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        if (editing) {
-          setServices(prev => prev.map(s => s.id === editing.id ? { ...s, ...data } : s))
-        } else {
-          setServices(prev => [...prev, data])
-        }
-        setShowForm(false)
-      } else {
-        const err = await res.json()
-        setError(err.error || 'Error al guardar')
-      }
-    } catch {
-      setError('Error de conexión')
-    } finally {
-      setSaving(false)
-    }
+      const res = await fetch(editing ? `/api/admin/servicios/${editing.id}` : '/api/admin/servicios', { method: editing ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, price: parseFloat(form.price) }) })
+      if (res.ok) { const data = await res.json(); if (editing) setServices(prev => prev.map(s => s.id === editing.id ? { ...s, ...data } : s)); else setServices(prev => [...prev, data]); setShowForm(false) }
+      else { const err = await res.json(); setError(err.error || 'Error al guardar') }
+    } catch { setError('Error de conexión') }
+    finally { setSaving(false) }
   }
 
   async function handleDelete(id: string) {
     if (!confirm('¿Eliminar este servicio?')) return
-    try {
-      const res = await fetch(`/api/admin/servicios/${id}`, { method: 'DELETE' })
-      if (res.ok) setServices(prev => prev.filter(s => s.id !== id))
-    } catch {
-      console.error('Error deleting service')
-    }
+    try { const res = await fetch(`/api/admin/servicios/${id}`, { method: 'DELETE' }); if (res.ok) setServices(prev => prev.filter(s => s.id !== id)) } catch { console.error('Error deleting service') }
   }
 
   function formatPrice(price: string) {
@@ -101,171 +57,89 @@ export default function ServicesManager({ services: initialServices }: ServicesM
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div style={{ padding: 'var(--space-6)', maxWidth: '1280px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Servicios</h1>
-          <p className="text-sm text-gray-500 mt-1">Gestiona los servicios que ofrece tu negocio</p>
+          <h1 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--c-fg)', margin: 0 }}>Servicios</h1>
+          <p style={{ fontSize: '14px', color: 'var(--c-muted-fg)', marginTop: '4px' }}>Gestiona los servicios que ofrece tu negocio</p>
         </div>
-        <button
-          onClick={openNew}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
-        >
-          <Plus size={16} />
-          Nuevo servicio
+        <button onClick={openNew} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-lg)', background: 'var(--c-primary)', color: '#fff', fontSize: '14px', fontWeight: 500, border: 'none', cursor: 'pointer' }}>
+          <Plus size={16} /> Nuevo servicio
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-4">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Buscar servicios..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-indigo-500 focus:outline-none"
-        />
+      <div style={{ position: 'relative', marginBottom: 'var(--space-4)' }}>
+        <Search size={16} style={{ position: 'absolute', left: 'var(--space-3)', top: '50%', transform: 'translateY(-50%)', color: 'var(--c-muted-fg)' }} />
+        <input type="text" placeholder="Buscar servicios..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: '100%', padding: 'var(--space-2) var(--space-3) var(--space-2) var(--space-9)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', background: 'var(--c-surface)', color: 'var(--c-fg)' }} />
       </div>
 
-      {/* Services list */}
       {filtered.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <Package size={48} className="mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-1">
-            {search ? 'No se encontraron servicios' : 'Sin servicios'}
-          </h3>
-          <p className="text-sm text-gray-500 mb-4">
-            {search ? 'Intenta con otra búsqueda' : 'Crea tu primer servicio para comenzar'}
-          </p>
-          {!search && (
-            <button
-              onClick={openNew}
-              className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
-            >
-              Crear servicio
-            </button>
-          )}
+        <div style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 'var(--radius-lg)', padding: '48px', textAlign: 'center' }}>
+          <Package size={48} style={{ margin: '0 auto 16px', color: 'var(--c-muted-fg)', opacity: 0.5 }} />
+          <h3 style={{ fontSize: '18px', fontWeight: 500, color: 'var(--c-fg)', margin: '0 0 4px' }}>{search ? 'No se encontraron servicios' : 'Sin servicios'}</h3>
+          <p style={{ fontSize: '14px', color: 'var(--c-muted-fg)', margin: '0 0 16px' }}>{search ? 'Intenta con otra búsqueda' : 'Crea tu primer servicio para comenzar'}</p>
+          {!search && <button onClick={openNew} style={{ padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-lg)', background: 'var(--c-primary)', color: '#fff', fontSize: '14px', fontWeight: 500, border: 'none', cursor: 'pointer' }}>Crear servicio</button>}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           {filtered.map(service => (
-            <div key={service.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
+            <div key={service.id} style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 'var(--radius)', background: 'var(--c-primary-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--c-primary)' }}>
                 <Package size={20} />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-gray-900">{service.name}</h3>
-                  <span className={cn(
-                    'px-2 py-0.5 rounded-full text-xs font-medium',
-                    service.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                  )}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--c-fg)', margin: 0 }}>{service.name}</h3>
+                  <span style={{ padding: '2px 8px', borderRadius: 'var(--radius-full)', fontSize: '11px', fontWeight: 500, background: service.isActive ? 'var(--c-success-bg)' : 'var(--c-muted)', color: service.isActive ? 'var(--c-success)' : 'var(--c-muted-fg)' }}>
                     {service.isActive ? 'Activo' : 'Inactivo'}
                   </span>
                 </div>
-                {service.description && (
-                  <p className="text-xs text-gray-500 mt-0.5 truncate">{service.description}</p>
-                )}
-                <div className="flex items-center gap-4 mt-1">
-                  <span className="flex items-center gap-1 text-xs text-gray-500">
-                    <DollarSign size={12} />
-                    {formatPrice(service.price)}
-                  </span>
-                  <span className="flex items-center gap-1 text-xs text-gray-500">
-                    <Clock size={12} />
-                    {service.durationDays} días
-                  </span>
+                {service.description && <p style={{ fontSize: '12px', color: 'var(--c-muted-fg)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{service.description}</p>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', marginTop: '4px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--c-muted-fg)' }}><DollarSign size={12} />{formatPrice(service.price)}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--c-muted-fg)' }}><Clock size={12} />{service.durationDays} días</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => openEdit(service)}
-                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600"
-                >
-                  <Edit2 size={15} />
-                </button>
-                <button
-                  onClick={() => handleDelete(service.id)}
-                  className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500"
-                >
-                  <Trash2 size={15} />
-                </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <button onClick={() => openEdit(service)} style={{ padding: 'var(--space-2)', borderRadius: 'var(--radius)', border: 'none', background: 'transparent', color: 'var(--c-muted-fg)', cursor: 'pointer' }}><Edit2 size={15} /></button>
+                <button onClick={() => handleDelete(service.id)} style={{ padding: 'var(--space-2)', borderRadius: 'var(--radius)', border: 'none', background: 'transparent', color: 'var(--c-muted-fg)', cursor: 'pointer' }}><Trash2 size={15} /></button>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Form modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowForm(false)} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">
-                {editing ? 'Editar servicio' : 'Nuevo servicio'}
-              </h2>
-              <button onClick={() => setShowForm(false)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400">
-                <X size={16} />
-              </button>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-4)' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} onClick={() => setShowForm(false)} />
+          <div style={{ position: 'relative', background: 'var(--c-surface)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)', width: '100%', maxWidth: 480, padding: 'var(--space-6)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--c-fg)', margin: 0 }}>{editing ? 'Editar servicio' : 'Nuevo servicio'}</h2>
+              <button onClick={() => setShowForm(false)} style={{ padding: 'var(--space-1)', borderRadius: 'var(--radius)', border: 'none', background: 'transparent', color: 'var(--c-muted-fg)', cursor: 'pointer' }}><X size={16} /></button>
             </div>
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="Ej: Lavado básico"
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:border-indigo-500 focus:outline-none"
-                />
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--c-fg)', marginBottom: 'var(--space-1)' }}>Nombre *</label>
+                <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ej: Lavado básico" style={{ width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', background: 'var(--c-surface)', color: 'var(--c-fg)' }} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                <textarea
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="Describe el servicio..."
-                  rows={2}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:border-indigo-500 focus:outline-none resize-none"
-                />
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--c-fg)', marginBottom: 'var(--space-1)' }}>Descripción</label>
+                <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Describe el servicio..." rows={2} style={{ width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', background: 'var(--c-surface)', color: 'var(--c-fg)', resize: 'none' }} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio (COP) *</label>
-                  <input
-                    type="number"
-                    value={form.price}
-                    onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                    placeholder="15000"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:border-indigo-500 focus:outline-none"
-                  />
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--c-fg)', marginBottom: 'var(--space-1)' }}>Precio (COP) *</label>
+                  <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="15000" style={{ width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', background: 'var(--c-surface)', color: 'var(--c-fg)' }} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Duración (días)</label>
-                  <input
-                    type="number"
-                    value={form.durationDays}
-                    onChange={e => setForm(f => ({ ...f, durationDays: parseInt(e.target.value) || 1 }))}
-                    min={1}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:border-indigo-500 focus:outline-none"
-                  />
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--c-fg)', marginBottom: 'var(--space-1)' }}>Duración (días)</label>
+                  <input type="number" value={form.durationDays} onChange={e => setForm(f => ({ ...f, durationDays: parseInt(e.target.value) || 1 }))} min={1} style={{ width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', background: 'var(--c-surface)', color: 'var(--c-fg)' }} />
                 </div>
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="flex-1 px-4 py-2 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving || !form.name.trim() || !form.price}
-                  className="flex-1 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
-                >
+              {error && <p style={{ fontSize: '13px', color: 'var(--c-destructive)', margin: 0 }}>{error}</p>}
+              <div style={{ display: 'flex', gap: 'var(--space-3)', paddingTop: 'var(--space-2)' }}>
+                <button type="button" onClick={() => setShowForm(false)} style={{ flex: 1, padding: 'var(--space-2)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', fontWeight: 500, color: 'var(--c-fg)', background: 'transparent', cursor: 'pointer' }}>Cancelar</button>
+                <button onClick={handleSave} disabled={saving || !form.name.trim() || !form.price} style={{ flex: 1, padding: 'var(--space-2)', borderRadius: 'var(--radius-lg)', background: 'var(--c-primary)', color: '#fff', fontSize: '14px', fontWeight: 500, border: 'none', cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
                   {saving ? 'Guardando...' : editing ? 'Guardar' : 'Crear'}
                 </button>
               </div>
