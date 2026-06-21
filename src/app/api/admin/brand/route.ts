@@ -9,7 +9,6 @@ export async function POST(req: Request) {
   try {
     const session = await auth.api.getSession({ headers: req.headers })
     if (!session?.user) return unauthorized()
-
     const body = await req.json()
     if (!body.name || !body.slug) {
       return badRequest('Nombre y slug son requeridos')
@@ -21,22 +20,24 @@ export async function POST(req: Request) {
       return badRequest('El slug ya está en uso')
     }
 
-    // Create brand
+    // Create brand with address
     const [brand] = await db.insert(brands).values({
       name: body.name,
       slug: body.slug,
       businessType: body.businessType || 'otros',
+      address: body.address || null,
       active: true,
       currentPlan: 'free',
       activeModules: { mensajes: true, promotions: true },
-      onboardingCompleted: false,
+      onboardingCompleted: true,
     }).returning()
 
-    // Create default establishment
+    // Create default establishment with address
     const [establishment] = await db.insert(establishments).values({
       brandId: brand.id,
       name: 'Sucursal Principal',
       slug: `${body.slug}-principal`,
+      address: body.address || null,
       active: true,
     }).returning()
 
@@ -45,6 +46,12 @@ export async function POST(req: Request) {
       brandId: brand.id,
       establishmentId: establishment.id,
     }).where(eq(users.id, session.user.id))
+
+    // TODO: Send data consent email to admin
+    // This will be implemented when email module is ready
+    if (body.dataConsent) {
+      console.log('[onboarding] Data consent accepted by user:', session.user.id)
+    }
 
     return ok({ brand, establishment })
   } catch (err) {

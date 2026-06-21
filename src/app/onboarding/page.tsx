@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
-import { OnboardingWizard } from './OnboardingWizard'
+import OnboardingWizard from './OnboardingWizard'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Configurar negocio — Turnflow' }
