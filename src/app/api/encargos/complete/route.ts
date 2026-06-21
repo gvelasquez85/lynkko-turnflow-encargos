@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   await db
     .update(encargos)
     .set({ status: 'delivered', deliveredAt: now, updatedAt: now })
-    .where(eq(encargos.id, encargoId))
+    .where(and(eq(encargos.id, encargoId), eq(encargos.brandId, brandId)))
 
   const saleId = encargo.saleId ?? null
 

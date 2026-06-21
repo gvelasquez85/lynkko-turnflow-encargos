@@ -907,6 +907,7 @@ export const encargoServices = pgTable('encargo_services', {
 export const encargos = pgTable('encargos', {
   id:              uuid('id').primaryKey().defaultRandom(),
   brandId:         uuid('brand_id').notNull().references(() => brands.id, { onDelete: 'cascade' }),
+  establishmentId: uuid('establishment_id').references(() => establishments.id, { onDelete: 'cascade' }),
   customerId:      uuid('customer_id').references(() => customers.id, { onDelete: 'set null' }),
   orderCode:       text('order_code').notNull().unique(),
   serviceId:       uuid('service_id').references(() => encargoServices.id, { onDelete: 'set null' }),

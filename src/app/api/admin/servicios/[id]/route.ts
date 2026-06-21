@@ -55,7 +55,7 @@ export async function PATCH(
         price: body.price?.toString() || existing.price,
         durationDays: body.durationDays || existing.durationDays,
       })
-      .where(eq(encargoServices.id, id))
+      .where(and(eq(encargoServices.id, id), eq(encargoServices.brandId, ctx.brandId)))
       .returning()
 
     return ok(updated)
@@ -81,7 +81,7 @@ export async function DELETE(
 
     if (!existing) return notFound('Servicio no encontrado')
 
-    await db.delete(encargoServices).where(eq(encargoServices.id, id))
+    await db.delete(encargoServices).where(and(eq(encargoServices.id, id), eq(encargoServices.brandId, ctx.brandId)))
 
     return ok({ deleted: true })
   } catch (err) {

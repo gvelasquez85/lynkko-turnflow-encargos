@@ -30,7 +30,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const [updated] = await db.update(establishments)
       .set(patch)
-      .where(eq(establishments.id, id))
+      .where(and(eq(establishments.id, id), eq(establishments.brandId, brandId)))
       .returning()
 
     return NextResponse.json(updated)
@@ -54,7 +54,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     if (!existing) return NextResponse.json({ error: 'Sucursal no encontrada' }, { status: 404 })
 
-    await db.delete(establishments).where(eq(establishments.id, id))
+    await db.delete(establishments).where(and(eq(establishments.id, id), eq(establishments.brandId, brandId)))
 
     return NextResponse.json({ ok: true })
   } catch {
