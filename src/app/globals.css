@@ -1,170 +1,46 @@
 @import "tailwindcss";
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Lynkko Design System v1.0 — CSS Tokens
-   Aplicación: Turnflow Encargos
-   Color primario: Sky 700 #0369a1
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 :root {
-  /* ── Primary (Sky 700 — Turnflow) ────────────────────────────────────── */
-  --primary:           200 98% 39%;
-  --primary-50:        204 100% 97%;
-  --primary-100:       204 100% 94%;
-  --primary-200:       199 95% 86%;
-  --primary-700:       200 98% 39%;
-  --primary-900:       202 80% 24%;
-
-  /* ── Base tokens ────────────────────────────────────────────────────── */
-  --background:        210 40% 98%;
-  --foreground:        222 47% 11%;
-  --card:              0 0% 100%;
-  --card-foreground:   222 47% 11%;
-  --muted:             210 40% 96%;
-  --muted-foreground:  215 16% 47%;
-  --border:            214 32% 91%;
-  --input:             214 32% 91%;
-  --ring:              200 98% 39%;
-  --destructive:       0 84% 60%;
+  --primary: 200 98% 39%;
+  --primary-50: 204 100% 97%;
+  --primary-100: 204 100% 94%;
+  --primary-200: 199 95% 86%;
+  --background: 210 40% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 200 98% 39%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --accent:            48 96% 53%;
+  --accent: 48 96% 53%;
   --accent-foreground: 222 47% 11%;
-  --secondary:         215 28% 17%;
+  --secondary: 215 28% 17%;
   --secondary-foreground: 0 0% 100%;
-
-  /* ── Chart data-viz tokens ───────────────────────────────────────────── */
-  --chart-1:           #0369a1;
-  --chart-2:           #15803d;
-  --chart-3:           #c2410c;
-  --chart-4:           #a16207;
-  --chart-5:           #475569;
-
-  /* ── Radius ──────────────────────────────────────────────────────────── */
-  --radius:            8px;
-  --radius-lg:         12px;
-  --radius-xl:         16px;
-  --radius-full:       9999px;
-
-  /* ── Shadows ─────────────────────────────────────────────────────────── */
-  --shadow-sm:         0 1px 2px rgba(0,0,0,0.05);
-  --shadow:            0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md:         0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-  --shadow-lg:         0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  --radius: 8px;
 }
 
 .dark {
-  --background:        222 47% 11%;
-  --foreground:        210 40% 98%;
-  --card:              215 28% 17%;
-  --card-foreground:   210 40% 98%;
-  --muted:             215 28% 17%;
-  --muted-foreground:  215 20% 65%;
-  --border:            215 28% 26%;
-  --input:             215 28% 26%;
-  --ring:              200 98% 39%;
-  --primary:           199 89% 48%;
-  --destructive:       0 91% 71%;
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 215 28% 17%;
+  --card-foreground: 210 40% 98%;
+  --muted: 215 28% 17%;
+  --muted-foreground: 215 20% 65%;
+  --border: 215 28% 26%;
+  --input: 215 28% 26%;
+  --ring: 200 98% 39%;
+  --primary: 199 89% 48%;
+  --destructive: 0 91% 71%;
   --destructive-foreground: 222 47% 11%;
-  --accent:            48 96% 53%;
-  --accent-foreground: 222 47% 11%;
-
-  /* ── Dark chart tokens ───────────────────────────────────────────────── */
-  --chart-1:           #38bdf8;
-  --chart-2:           #4ade80;
-  --chart-3:           #fb923c;
-  --chart-4:           #facc15;
-  --chart-5:           #94a3b8;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Base Styles
-   ═══════════════════════════════════════════════════════════════════════════ */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
-
 body {
-  margin: 0;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* ── Scrollbar ─────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
-
-/* ── Focus visible ────────────────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid hsl(var(--primary));
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ── Selection ─────────────────────────────────────────────────────────── */
-::selection {
-  background: hsl(var(--primary-200));
-  color: hsl(var(--primary-900));
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   Custom Utility Classes for Design System
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-@utility bg-card {
-  background: hsl(var(--card));
-}
-
-@utility text-card-foreground {
-  color: hsl(var(--card-foreground));
-}
-
-@utility bg-primary {
-  background: hsl(var(--primary));
-}
-
-@utility text-primary {
-  color: hsl(var(--primary));
-}
-
-@utility bg-destructive {
-  background: hsl(var(--destructive));
-}
-
-@utility text-destructive {
-  color: hsl(var(--destructive));
-}
-
-@utility bg-muted {
-  background: hsl(var(--muted));
-}
-
-@utility text-muted-foreground {
-  color: hsl(var(--muted-foreground));
-}
-
-@utility border-border {
-  border-color: hsl(var(--border));
-}
-
-@utility rounded-xl {
-  border-radius: var(--radius-lg);
-}
-
-@utility rounded-2xl {
-  border-radius: var(--radius-xl);
-}
-
-@utility shadow-sm {
-  box-shadow: var(--shadow-sm);
-}
-
-@utility shadow-lg {
-  box-shadow: var(--shadow-lg);
 }
