@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Package, Clock, CheckCircle2, Truck, AlertCircle, Plus } from 'lucide-react'
+import { Package, Clock, CheckCircle2, Truck, AlertCircle, Plus, ChevronRight, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Encargo {
@@ -23,13 +23,14 @@ interface EncargosKanbanProps {
 }
 
 const COLUMNS = [
-  { key: 'received', label: 'Recibido', icon: Package, color: 'bg-blue-500', lightColor: 'bg-blue-50 border-blue-200' },
-  { key: 'in_progress', label: 'En proceso', icon: Clock, color: 'bg-amber-500', lightColor: 'bg-amber-50 border-amber-200' },
-  { key: 'ready', label: 'Listo', icon: CheckCircle2, color: 'bg-green-500', lightColor: 'bg-green-50 border-green-200' },
-  { key: 'delivered', label: 'Entregado', icon: Truck, color: 'bg-purple-500', lightColor: 'bg-purple-50 border-purple-200' },
+  { key: 'received', label: 'Recibido', icon: Package, color: 'bg-blue-500', lightColor: 'bg-blue-50 border-blue-200', next: 'in_progress' },
+  { key: 'in_progress', label: 'En proceso', icon: Clock, color: 'bg-amber-500', lightColor: 'bg-amber-50 border-amber-200', next: 'ready' },
+  { key: 'ready', label: 'Listo', icon: CheckCircle2, color: 'bg-green-500', lightColor: 'bg-green-50 border-green-200', next: 'delivered' },
+  { key: 'delivered', label: 'Entregado', icon: Truck, color: 'bg-purple-500', lightColor: 'bg-purple-50 border-purple-200', next: null },
 ]
 
-export default function EncargosKanban({ encargos }: EncargosKanbanProps) {
+export default function EncargosKanban({ encargos: initialEncargos }: EncargosKanbanProps) {
+  const [encargos, setEncargos] = useState(initialEncargos)
   const [showNew, setShowNew] = useState(false)
 
   function formatPrice(price: string) {
@@ -39,6 +40,21 @@ export default function EncargosKanban({ encargos }: EncargosKanbanProps) {
   function formatDate(date: Date | null) {
     if (!date) return 'Sin fecha'
     return new Date(date).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+  }
+
+  async function advanceStatus(id: string, newStatus: string) {
+    try {
+      const res = await fetch(`/api/encargos/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (res.ok) {
+        setEncargos(prev => prev.map(e => e.id === id ? { ...e, status: newStatus } : e))
+      }
+    } catch (err) {
+      console.error('Error advancing status:', err)
+    }
   }
 
   return (
@@ -90,6 +106,15 @@ export default function EncargosKanban({ encargos }: EncargosKanbanProps) {
                       <span className="text-xs text-gray-600">{encargo.customerName || 'Sin cliente'}</span>
                       <span className="text-xs text-gray-400">{formatDate(encargo.promisedDate)}</span>
                     </div>
+                    {column.next && (
+                      <button
+                        onClick={() => advanceStatus(encargo.id, column.next!)}
+                        className="mt-2 w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
+                      >
+                        Avanzar a {COLUMNS.find(c => c.key === column.next)?.label}
+                        <ChevronRight size={12} />
+                      </button>
+                    )}
                   </div>
                 ))}
 

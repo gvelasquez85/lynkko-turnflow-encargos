@@ -7,6 +7,7 @@ const PUBLIC_PREFIXES = [
   '/forgot-password',
   '/reset-password',
   '/onboarding',
+  '/portal',
   '/api/auth',
   '/api/webhooks',
   '/_next',
