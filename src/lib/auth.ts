@@ -48,11 +48,17 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled:          true,
     requireEmailVerification: false,
+    sendResetPassword: async ({ user, url }) => {
+      console.log('═══════════════════════════════════════════════════════════════')
+      console.log(`[RESET PASSWORD] User: ${user.email}`)
+      console.log(`[RESET PASSWORD] URL: ${url}`)
+      console.log('═══════════════════════════════════════════════════════════════')
+    },
   },
 
   session: {
-    expiresIn:  60 * 60 * 24 * 7,  // 7 días
-    updateAge:  60 * 60 * 24,       // renovar si queda menos de 1 día
+    expiresIn:  60 * 60 * 24 * 7,
+    updateAge:  60 * 60 * 24,
     cookieCache: {
       enabled: false,
     },
