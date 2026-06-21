@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import { encargos, customers } from '@/lib/db/schema'
+import { encargos, customers, brands, users } from '@/lib/db/schema'
 import { eq, desc, sql } from '@lynkko/db'
 import { getContext } from '@/lib/context'
 import { HomePanel } from './HomePanel'
@@ -11,6 +11,20 @@ export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
   const ctx = await getContext()
+
+  // Get brand name
+  const [brand] = await db
+    .select({ name: brands.name })
+    .from(brands)
+    .where(eq(brands.id, ctx.brandId))
+    .limit(1)
+
+  // Get user name
+  const [user] = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, ctx.userId))
+    .limit(1)
 
   // Get recent encargos
   const recentEncargos = await db
@@ -48,8 +62,8 @@ export default async function DashboardPage() {
 
   return (
     <HomePanel
-      brandName={ctx.brandId || 'Turnflow'}
-      userName={ctx.userId}
+      brandName={brand?.name || 'Turnflow Encargos'}
+      userName={user?.name || 'Usuario'}
       encargosRecientes={recentEncargos as any}
       stats={{
         total: Number(row.total) || 0,
