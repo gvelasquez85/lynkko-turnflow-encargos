@@ -1070,11 +1070,16 @@ function CreateModal({ onClose, onCreated }: {
   onCreated: (c: Customer) => void
 }) {
   const [form, setForm] = useState({ name: '', phone: '', email: '', documentId: '' })
+  const [dataConsent, setDataConsent] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   async function handleCreate() {
     if (!form.name.trim()) return
+    if (!dataConsent) {
+      setError('Debes aceptar el tratamiento de datos personales para crear el cliente')
+      return
+    }
     setSaving(true); setError('')
     try {
       const res = await fetch('/api/clientes', {
@@ -1085,6 +1090,7 @@ function CreateModal({ onClose, onCreated }: {
           phone: form.phone || null,
           email: form.email || null,
           documentId: form.documentId || null,
+          dataConsent,
         }),
       })
       const json = await res.json()
@@ -1123,7 +1129,7 @@ function CreateModal({ onClose, onCreated }: {
             { key: 'name', label: 'Nombre *', type: 'text' },
             { key: 'phone', label: 'Teléfono', type: 'tel' },
             { key: 'email', label: 'Correo', type: 'email' },
-            { key: 'documentId', label: 'Documento', type: 'text' },
+            { key: 'documentId', label: 'Documento de identidad *', type: 'text' },
           ].map(({ key, label, type }) => (
             <div key={key}>
               <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
@@ -1135,11 +1141,26 @@ function CreateModal({ onClose, onCreated }: {
               />
             </div>
           ))}
+          <label className="flex items-start gap-2 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
+            <input
+              type="checkbox"
+              checked={dataConsent}
+              onChange={e => setDataConsent(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <div>
+              <p className="text-xs font-medium text-gray-900">Acepto el tratamiento de datos personales</p>
+              <p className="text-[10px] text-gray-500 mt-0.5">
+                Autorizo a almacenar y procesar los datos de este cliente para gestionar sus encargos.
+                Se enviará un correo de notificación al cliente.
+              </p>
+            </div>
+          </label>
           {error && <p className="text-xs text-red-600">{error}</p>}
           <div className="flex gap-2 pt-2">
             <button
               onClick={handleCreate}
-              disabled={saving || !form.name.trim()}
+              disabled={saving || !form.name.trim() || !dataConsent}
               className="flex-1 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors"
             >
               {saving ? 'Creando...' : 'Crear cliente'}
