@@ -37,6 +37,7 @@ export function LoginForm() {
         'Email not found': 'No se encontró una cuenta con ese correo',
         'Invalid identifier or credentials': 'Credenciales incorrectas',
         'Account not found': 'No se encontró una cuenta con esas credenciales',
+        'Invalid email or password': 'Correo o contraseña incorrectos',
       }
       setError(translations[msg] || msg)
       setLoading(false)
