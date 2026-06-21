@@ -49,10 +49,42 @@ export const auth = betterAuth({
     enabled:          true,
     requireEmailVerification: false,
     sendResetPassword: async ({ user, url }) => {
-      console.log('═══════════════════════════════════════════════════════════════')
-      console.log(`[RESET PASSWORD] User: ${user.email}`)
-      console.log(`[RESET PASSWORD] URL: ${url}`)
-      console.log('═══════════════════════════════════════════════════════════════')
+      try {
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: process.env.RESEND_FROM_EMAIL || 'Turnflow <no-reply@turnflow.co>',
+            to: user.email,
+            subject: 'Restablece tu contraseña - Turnflow',
+            html: `
+              <div style="font-family: system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+                <h1 style="color: #166534; font-size: 24px; margin-bottom: 16px;">Turnflow</h1>
+                <p style="color: #374151; font-size: 16px; line-height: 1.5;">
+                  Hola, recibimos una solicitud para restablecer tu contraseña.
+                </p>
+                <p style="color: #374151; font-size: 16px; line-height: 1.5;">
+                  Haz clic en el botón siguiente para crear una nueva contraseña:
+                </p>
+                <a href="${url}" style="display: inline-block; margin: 24px 0; padding: 12px 24px; background: #166534; color: white; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                  Restablecer contraseña
+                </a>
+                <p style="color: #6b7280; font-size: 14px; margin-top: 24px;">
+                  Si no solicitaste este cambio, puedes ignorar este correo.
+                </p>
+              </div>
+            `,
+          }),
+        })
+        if (!res.ok) {
+          console.error('[RESET PASSWORD] Resend API error:', await res.text())
+        }
+      } catch (err) {
+        console.error('[RESET PASSWORD] Failed to send email:', err)
+      }
     },
   },
 
