@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Package, Clock, CheckCircle2, Truck, AlertCircle, Plus, ChevronRight } from 'lucide-react'
+import { Plus, Clock, CheckCircle2, Truck, AlertCircle } from 'lucide-react'
 
 interface Encargo {
   id: string
@@ -11,25 +11,31 @@ interface Encargo {
   price: string
   promisedDate: Date | null
   createdAt: Date
-  customerId: string | null
   customerName: string | null
-  customerPhone: string | null
   serviceName: string | null
 }
 
-interface EncargosKanbanProps {
+interface Props {
   encargos: Encargo[]
 }
 
 const COLUMNS = [
-  { key: 'received', label: 'Recibido', icon: Package, color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
-  { key: 'in_progress', label: 'En proceso', icon: Clock, color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
-  { key: 'ready', label: 'Listo', icon: CheckCircle2, color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
-  { key: 'delivered', label: 'Entregado', icon: Truck, color: '#9333ea', bg: '#faf5ff', border: '#e9d5ff' },
+  { key: 'received', label: 'Recibido', icon: Plus, color: 'sky', bg: 'bg-sky-50 dark:bg-sky-950', border: 'border-sky-200 dark:border-sky-800', headerBg: 'bg-sky-600' },
+  { key: 'in_progress', label: 'En proceso', icon: Clock, color: 'amber', bg: 'bg-amber-50 dark:bg-amber-950', border: 'border-amber-200 dark:border-amber-800', headerBg: 'bg-amber-600' },
+  { key: 'ready', label: 'Listo', icon: CheckCircle2, color: 'green', bg: 'bg-green-50 dark:bg-green-950', border: 'border-green-200 dark:border-green-800', headerBg: 'bg-green-600' },
+  { key: 'delivered', label: 'Entregado', icon: Truck, color: 'purple', bg: 'bg-purple-50 dark:bg-purple-950', border: 'border-purple-200 dark:border-purple-800', headerBg: 'bg-purple-600' },
 ]
 
-export default function EncargosKanban({ encargos: initialEncargos }: EncargosKanbanProps) {
-  const [encargos, setEncargos] = useState(initialEncargos)
+const statusLabels: Record<string, { label: string; cls: string }> = {
+  received:    { label: 'Recibido', cls: 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300' },
+  in_progress: { label: 'En proceso', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' },
+  ready:       { label: 'Listo', cls: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' },
+  delivered:   { label: 'Entregado', cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' },
+  cancelled:   { label: 'Cancelado', cls: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
+}
+
+export default function EncargosKanban({ encargos: initial }: Props) {
+  const [encargos, setEncargos] = useState(initial)
   const [showNew, setShowNew] = useState(false)
   const [newForm, setNewForm] = useState({ itemDescription: '', price: '', serviceId: '', customerId: '', promisedDate: '', notifyWhatsapp: true })
   const [saving, setSaving] = useState(false)
@@ -41,20 +47,11 @@ export default function EncargosKanban({ encargos: initialEncargos }: EncargosKa
     fetch('/api/clientes').then(r => r.json()).then(d => setCustomers(d || [])).catch(() => {})
   }, [])
 
-  function formatPrice(price: string) {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(parseFloat(price))
-  }
-
-  function formatDate(date: Date | null) {
-    if (!date) return 'Sin fecha'
-    return new Date(date).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
-  }
-
   async function advanceStatus(id: string, newStatus: string) {
     try {
-      const res = await fetch(`/api/encargos/${id}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) })
-      if (res.ok) setEncargos(prev => prev.map(e => e.id === id ? { ...e, status: newStatus } : e))
-    } catch (err) { console.error('Error advancing status:', err) }
+      await fetch(`/api/encargos/${id}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) })
+      setEncargos(prev => prev.map(e => e.id === id ? { ...e, status: newStatus } : e))
+    } catch (err) { console.error(err) }
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -64,59 +61,65 @@ export default function EncargosKanban({ encargos: initialEncargos }: EncargosKa
     try {
       const res = await fetch('/api/encargos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newForm) })
       if (res.ok) { const data = await res.json(); setEncargos(prev => [data, ...prev]); setShowNew(false); setNewForm({ itemDescription: '', price: '', serviceId: '', customerId: '', promisedDate: '', notifyWhatsapp: true }) }
-    } catch (err) { console.error('Error creating encargo:', err) }
+    } catch (err) { console.error(err) }
     finally { setSaving(false) }
   }
 
+  const nextCol = (key: string) => {
+    const idx = COLUMNS.findIndex(c => c.key === key)
+    return idx < COLUMNS.length - 1 ? COLUMNS[idx + 1].key : null
+  }
+
   return (
-    <div style={{ padding: 'var(--space-6)', maxWidth: '1280px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 800, color: 'var(--c-fg)', margin: 0 }}>Encargos</h1>
-          <p style={{ fontSize: '14px', color: 'var(--c-muted-fg)', marginTop: '4px' }}>Gestiona los encargos de tus clientes</p>
+          <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Encargos</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Gestiona los encargos de tus clientes</p>
         </div>
-        <button onClick={() => setShowNew(true)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', padding: 'var(--space-2) var(--space-4)', borderRadius: 'var(--radius-lg)', background: 'var(--c-primary)', color: '#fff', fontSize: '14px', fontWeight: 500, border: 'none', cursor: 'pointer' }}>
+        <button onClick={() => setShowNew(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-600 text-white text-sm font-medium hover:bg-sky-700">
           <Plus size={16} /> Nuevo encargo
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-4)' }}>
-        {COLUMNS.map(column => {
-          const columnEncargos = encargos.filter(e => e.status === column.key)
-          const Icon = column.icon
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {COLUMNS.map(col => {
+          const items = encargos.filter(e => e.status === col.key)
+          const Icon = col.icon
           return (
-            <div key={column.key} style={{ borderRadius: 'var(--radius-lg)', border: `2px solid ${column.border}`, padding: 'var(--space-3)', minHeight: 200, background: column.bg }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
-                <div style={{ width: 24, height: 24, borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: column.color, color: '#fff' }}>
+            <div key={col.key} className={`${col.bg} border-2 ${col.border} rounded-xl p-3 min-h-48`}>
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`w-6 h-6 rounded-md ${col.headerBg} flex items-center justify-center text-white`}>
                   <Icon size={14} />
                 </div>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--c-fg)' }}>{column.label}</span>
-                <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 500, color: 'var(--c-muted-fg)', background: 'var(--c-surface)', borderRadius: 'var(--radius-full)', padding: '2px 8px' }}>{columnEncargos.length}</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">{col.label}</span>
+                <span className="ml-auto text-xs font-medium text-gray-500 bg-white dark:bg-gray-800 rounded-full px-2 py-0.5">{items.length}</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                {columnEncargos.map(encargo => (
-                  <div key={encargo.id} style={{ background: 'var(--c-surface)', borderRadius: 'var(--radius)', padding: 'var(--space-3)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--c-border)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-1)' }}>
-                      <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--c-muted-fg)' }}>{encargo.orderCode}</span>
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--c-fg)' }}>{formatPrice(encargo.price)}</span>
+              <div className="flex flex-col gap-2">
+                {items.map(encargo => (
+                  <div key={encargo.id} className="bg-white dark:bg-gray-900 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-800">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-[11px] font-mono text-gray-400">{encargo.orderCode}</span>
+                      <span className="text-[11px] font-semibold text-gray-900 dark:text-white">${Number(encargo.price).toLocaleString('es-CO')}</span>
                     </div>
-                    <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--c-fg)', margin: '0 0 4px' }}>{encargo.itemDescription}</p>
-                    {encargo.serviceName && <p style={{ fontSize: '11px', color: 'var(--c-muted-fg)', margin: '0 0 8px' }}>{encargo.serviceName}</p>}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 'var(--space-2)', borderTop: '1px solid var(--c-border)' }}>
-                      <span style={{ fontSize: '11px', color: 'var(--c-fg)' }}>{encargo.customerName || 'Sin cliente'}</span>
-                      <span style={{ fontSize: '11px', color: 'var(--c-muted-fg)' }}>{formatDate(encargo.promisedDate)}</span>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">{encargo.itemDescription}</p>
+                    {encargo.serviceName && <p className="text-[11px] text-gray-500 mb-2">{encargo.serviceName}</p>}
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-800">
+                      <span className="text-[11px] text-gray-700 dark:text-gray-300">{encargo.customerName || 'Sin cliente'}</span>
+                      <span className="text-[11px] text-gray-400">{encargo.promisedDate ? new Date(encargo.promisedDate).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : 'Sin fecha'}</span>
                     </div>
-                    {column.key !== 'delivered' && (
-                      <button onClick={() => advanceStatus(encargo.id, COLUMNS[COLUMNS.indexOf(column) + 1].key)} style={{ marginTop: 'var(--space-2)', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-1)', padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius)', fontSize: '11px', fontWeight: 500, background: 'var(--c-muted)', color: 'var(--c-fg)', border: 'none', cursor: 'pointer' }}>
-                        Avanzar a {COLUMNS[COLUMNS.indexOf(column) + 1].label} <ChevronRight size={12} />
+                    {nextCol(col.status) && (
+                      <button onClick={() => advanceStatus(encargo.id, nextCol(col.status)!)}
+                        className="mt-2 w-full flex items-center justify-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">
+                        Avanzar →
                       </button>
                     )}
                   </div>
                 ))}
-                {columnEncargos.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--c-muted-fg)' }}>
-                    <AlertCircle size={20} style={{ margin: '0 auto 4px', opacity: 0.5 }} />
-                    <p style={{ fontSize: '11px' }}>Sin encargos</p>
+                {items.length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <AlertCircle size={20} className="mx-auto mb-1 opacity-50" />
+                    <p className="text-[11px]">Sin encargos</p>
                   </div>
                 )}
               </div>
@@ -125,47 +128,50 @@ export default function EncargosKanban({ encargos: initialEncargos }: EncargosKa
         })}
       </div>
 
+      {/* New encargo modal */}
       {showNew && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-4)' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} onClick={() => setShowNew(false)} />
-          <div style={{ position: 'relative', background: 'var(--c-surface)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)', width: '100%', maxWidth: 480, padding: 'var(--space-6)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--c-fg)', margin: '0 0 16px' }}>Nuevo encargo</h2>
-            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowNew(false)} />
+          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Nuevo encargo</h2>
+            <form onSubmit={handleCreate} className="flex flex-col gap-4">
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--c-fg)', marginBottom: 'var(--space-1)' }}>Descripción del artículo *</label>
-                <input type="text" value={newForm.itemDescription} onChange={e => setNewForm(f => ({ ...f, itemDescription: e.target.value }))} placeholder="Ej: Camisa de vestir" style={{ width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', background: 'var(--c-surface)', color: 'var(--c-fg)' }} required />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción del artículo *</label>
+                <input type="text" value={newForm.itemDescription} onChange={e => setNewForm(f => ({ ...f, itemDescription: e.target.value }))} placeholder="Ej: Camisa de vestir" required
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--c-fg)', marginBottom: 'var(--space-1)' }}>Precio (COP) *</label>
-                  <input type="number" value={newForm.price} onChange={e => setNewForm(f => ({ ...f, price: e.target.value }))} placeholder="15000" style={{ width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', background: 'var(--c-surface)', color: 'var(--c-fg)' }} required />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Precio (COP) *</label>
+                  <input type="number" value={newForm.price} onChange={e => setNewForm(f => ({ ...f, price: e.target.value }))} placeholder="15000" required
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500" />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--c-fg)', marginBottom: 'var(--space-1)' }}>Fecha estimada</label>
-                  <input type="date" value={newForm.promisedDate} onChange={e => setNewForm(f => ({ ...f, promisedDate: e.target.value }))} style={{ width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', background: 'var(--c-surface)', color: 'var(--c-fg)' }} />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha estimada</label>
+                  <input type="date" value={newForm.promisedDate} onChange={e => setNewForm(f => ({ ...f, promisedDate: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500" />
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--c-fg)', marginBottom: 'var(--space-1)' }}>Servicio</label>
-                <select value={newForm.serviceId} onChange={e => setNewForm(f => ({ ...f, serviceId: e.target.value }))} style={{ width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', background: 'var(--c-surface)', color: 'var(--c-fg)' }}>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Servicio</label>
+                <select value={newForm.serviceId} onChange={e => setNewForm(f => ({ ...f, serviceId: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500">
                   <option value="">Seleccionar servicio</option>
                   {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--c-fg)', marginBottom: 'var(--space-1)' }}>Cliente</label>
-                <select value={newForm.customerId} onChange={e => setNewForm(f => ({ ...f, customerId: e.target.value }))} style={{ width: '100%', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', background: 'var(--c-surface)', color: 'var(--c-fg)' }}>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cliente</label>
+                <select value={newForm.customerId} onChange={e => setNewForm(f => ({ ...f, customerId: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500">
                   <option value="">Seleccionar cliente</option>
                   {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: '13px', color: 'var(--c-fg)' }}>
-                <input type="checkbox" checked={newForm.notifyWhatsapp} onChange={e => setNewForm(f => ({ ...f, notifyWhatsapp: e.target.checked }))} />
-                Notificar por WhatsApp cuando esté listo
-              </label>
-              <div style={{ display: 'flex', gap: 'var(--space-3)', paddingTop: 'var(--space-2)' }}>
-                <button type="button" onClick={() => setShowNew(false)} style={{ flex: 1, padding: 'var(--space-2)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)', fontSize: '14px', fontWeight: 500, color: 'var(--c-fg)', background: 'transparent', cursor: 'pointer' }}>Cancelar</button>
-                <button type="submit" disabled={saving || !newForm.itemDescription || !newForm.price} style={{ flex: 1, padding: 'var(--space-2)', borderRadius: 'var(--radius-lg)', background: 'var(--c-primary)', color: '#fff', fontSize: '14px', fontWeight: 500, border: 'none', cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowNew(false)} className="flex-1 px-4 py-2 rounded-xl border border-gray-300 dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">Cancelar</button>
+                <button type="submit" disabled={saving || !newForm.itemDescription || !newForm.price}
+                  className="flex-1 px-4 py-2 rounded-xl bg-sky-600 text-white text-sm font-medium hover:bg-sky-700 disabled:opacity-50">
                   {saving ? 'Creando...' : 'Crear encargo'}
                 </button>
               </div>

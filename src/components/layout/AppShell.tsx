@@ -8,12 +8,11 @@ import { signOut } from '@/lib/auth-client'
 import {
   Building2, MessageSquare, BarChart2,
   Users, Store, Menu, ChevronLeft, ChevronRight, ChevronDown,
-  LogOut, LayoutDashboard, Settings, Shield, Zap, Clock,
-  Package, Shirt, Megaphone, Webhook, Moon, Sun,
+  LogOut, LayoutDashboard, Shield, Zap, Clock,
+  Package, Shirt, Megaphone, Webhook, Moon, Sun, Search,
 } from 'lucide-react'
 import { TurnFlowLogo } from '@/components/brand/TurnFlowLogo'
 import { useBrandStore } from '@/stores/brandStore'
-import { useLayoutStore } from '@/stores/layoutStore'
 import { I18nProvider, useT } from '@/lib/i18n/context'
 
 export type AppRole = 'superadmin' | 'brand_admin' | 'manager' | 'advisor' | 'reporting'
@@ -25,7 +24,6 @@ const HOME_ITEM: NavItem = { href: '/dashboard', label: 'Inicio', icon: LayoutDa
 const SUPERADMIN_ITEMS: NavItem[] = [
   { href: '/superadmin', label: 'Marcas', icon: Building2, exact: true },
   { href: '/superadmin/analytics', label: 'Analytics', icon: BarChart2 },
-  { href: '/superadmin/billing', label: 'Billing', icon: CreditCard },
   { href: '/marketplace', label: 'Marketplace', icon: Zap },
 ]
 const BRAND_ITEMS: NavItem[] = [
@@ -48,10 +46,8 @@ const REPORTES_ITEMS: NavItem[] = [
   { href: '/reportes/clientes', label: 'Clientes', icon: Users },
 ]
 const MENSAJES_ITEMS: NavItem[] = [{ href: '/configuracion/mensajes', label: 'Mensajes WhatsApp', icon: MessageSquare }]
-const PROMOTIONS_ITEMS: NavItem[] = [{ href: '/configuracion/promotions', label: 'Promociones', icon: Megaphone }]
-const INTEGRACIONES_ITEMS: NavItem[] = [{ href: '/configuracion/integraciones', label: 'API Keys & Webhooks', icon: Webhook }]
 
-function buildSections(role: string, activeModules?: Record<string, boolean>): NavSection[] {
+function buildSections(role: string): NavSection[] {
   if (role === 'reporting') return [{ key: 'reportes', section: 'Reportes', items: [{ href: '/reportes', label: 'Reportes', icon: BarChart2 }] }]
   if (role === 'superadmin') return [
     { key: 'admin', section: 'Administración', items: SUPERADMIN_ITEMS },
@@ -60,9 +56,7 @@ function buildSections(role: string, activeModules?: Record<string, boolean>): N
     { key: 'encargos', section: 'Encargos', items: ENCARGOS_ITEMS },
     { key: 'servicios', section: 'Servicios', items: SERVICES_ITEMS },
     { key: 'mensajes', section: 'Mensajes', items: MENSAJES_ITEMS },
-    { key: 'promotions', section: 'Promociones', items: PROMOTIONS_ITEMS },
     { key: 'reportes', section: 'Reportes', items: REPORTES_ITEMS },
-    { key: 'integraciones', section: 'Integraciones', items: INTEGRACIONES_ITEMS },
   ]
   const brandItems = role === 'brand_admin' ? BRAND_ITEMS : MANAGER_BRAND_ITEMS
   const sections: NavSection[] = [
@@ -72,10 +66,8 @@ function buildSections(role: string, activeModules?: Record<string, boolean>): N
     { key: 'encargos', section: 'Encargos', items: ENCARGOS_ITEMS },
     { key: 'servicios', section: 'Servicios', items: SERVICES_ITEMS },
   ]
-  if (activeModules?.mensajes) sections.push({ key: 'mensajes', section: 'Mensajes', items: MENSAJES_ITEMS })
+  sections.push({ key: 'mensajes', section: 'Mensajes', items: MENSAJES_ITEMS })
   sections.push({ key: 'reportes', section: 'Reportes', items: REPORTES_ITEMS })
-  if (activeModules?.integraciones) sections.push({ key: 'integraciones', section: 'Integraciones', items: INTEGRACIONES_ITEMS })
-  if (role === 'brand_admin') sections.push({ key: 'marketplace', section: 'Más', items: [{ href: '/marketplace', label: 'Marketplace', icon: Zap }] })
   return sections
 }
 
@@ -85,27 +77,24 @@ const roleLabel: Record<AppRole, string> = {
 
 export interface AppShellProps {
   children: React.ReactNode; role: AppRole; fullName?: string | null; email: string;
-  brandName?: string | null; establishmentName?: string | null; establishmentSlug?: string | null;
-  brands?: { id: string; name: string }[]; activeModules?: Record<string, boolean>; plan?: string;
+  brandName?: string | null; establishmentName?: string | null;
+  brands?: { id: string; name: string }[];
 }
 
-function AppShellInner({ children, role, fullName, email, brandName, establishmentName, brands: initialBrands, activeModules }: AppShellProps) {
+function AppShellInner({ children, role, fullName, email, brandName, establishmentName }: AppShellProps) {
   const { t } = useT()
-  const { mode: layoutMode } = useLayoutStore()
-  const tablet = layoutMode === 'tablet'
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-  const [darkMode, setDarkMode] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { selectedBrandId, setSelectedBrandId } = useBrandStore()
-  const [brands, setBrands] = useState<{ id: string; name: string }[]>(initialBrands || [])
+  const [brands, setBrands] = useState<{ id: string; name: string }[]>([])
   const brandInitialized = useRef(false)
   const profileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (role === 'superadmin' && (!initialBrands || initialBrands.length === 0)) {
+    if (role === 'superadmin') {
       fetch('/api/superadmin/brands').then(r => r.json()).then(data => { if (data.brands) setBrands(data.brands) }).catch(() => {})
     }
   }, [role])
@@ -127,37 +116,52 @@ function AppShellInner({ children, role, fullName, email, brandName, establishme
 
   function toggleCollapsed() { setCollapsed(c => { const n = !c; try { localStorage.setItem('sidebar-collapsed', String(n)) } catch {}; return n }) }
   async function handleLogout() { await signOut(); router.push('/login') }
-  function toggleDarkMode() { setDarkMode(d => { const n = !d; try { n ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark'); localStorage.setItem('theme', n ? 'dark' : 'light') } catch {}; return n }) }
   function isActive(href: string, exact?: boolean) { return exact ? pathname === href : pathname.startsWith(href) }
 
-  const sections = buildSections(role, activeModules)
+  const sections = buildSections(role)
   const subtitle = brandName ? (establishmentName ? `${brandName} · ${establishmentName}` : brandName) : null
 
   function SidebarContent({ mobile = false }: { mobile?: boolean }) {
     const ic = collapsed && !mobile
     return (
       <>
-        <div className={cn('flex items-center h-14 px-3 shrink-0', ic ? 'justify-center' : 'justify-between')} style={{ borderBottom: '1px solid var(--c-border)' }}>
-          {!ic && <div className="flex items-center gap-2.5"><TurnFlowLogo size={28} /><span className="font-bold tracking-tight" style={{ color: 'var(--c-fg)' }}>TurnFlow</span></div>}
+        <div className={cn(
+          'flex items-center h-14 px-3 shrink-0 border-b border-gray-200 dark:border-gray-800',
+          ic ? 'justify-center' : 'justify-between',
+        )}>
+          {!ic && (
+            <div className="flex items-center gap-2.5">
+              <TurnFlowLogo size={28} />
+              <span className="font-bold tracking-tight text-gray-900 dark:text-white">TurnFlow</span>
+            </div>
+          )}
           {ic && <TurnFlowLogo size={26} />}
-          <button onClick={toggleCollapsed} className="p-1.5 rounded-lg hidden md:flex items-center justify-center shrink-0" style={{ color: 'var(--c-muted-fg)' }}>
+          <button onClick={toggleCollapsed} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hidden md:flex items-center justify-center shrink-0">
             {ic ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
           </button>
-          <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg md:hidden shrink-0" style={{ color: 'var(--c-muted-fg)' }}><X size={15} /></button>
+          <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 md:hidden shrink-0">
+            <X size={15} />
+          </button>
         </div>
         <nav className="flex-1 overflow-y-auto py-2 px-2">
           {sections.map((section, si) => (
             <div key={section.key} className={cn('flex flex-col', si > 0 && 'mt-1')}>
-              {!ic && <p className="px-2 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--c-muted-fg)' }}>{section.section}</p>}
-              {ic && si > 0 && <div className="h-px mx-2 my-2" style={{ background: 'var(--c-border)' }} />}
+              {!ic && <p className="px-2 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">{section.section}</p>}
+              {ic && si > 0 && <div className="h-px bg-gray-100 dark:bg-gray-800 mx-2 my-2" />}
               <div className="flex flex-col gap-0.5">
                 {section.items.map(item => {
-                  const active = isActive(item.href, item.exact); const Icon = item.icon
+                  const active = isActive(item.href, item.exact)
+                  const Icon = item.icon
                   return (
                     <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)} title={ic ? item.label : undefined}
-                      className={cn('flex items-center gap-3 rounded-xl transition-colors', tablet ? 'px-3 py-3 text-base' : 'px-2 py-2 text-sm', ic && 'justify-center')}
-                      style={{ background: active ? 'var(--c-primary-50)' : 'transparent', color: active ? 'var(--c-primary)' : 'var(--c-muted-fg)' }}>
-                      <Icon size={tablet ? 22 : 18} className="shrink-0" />
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-2 py-2 text-sm transition-colors',
+                        ic && 'justify-center',
+                        active
+                          ? 'bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 font-medium'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200',
+                      )}>
+                      <Icon size={18} className="shrink-0" />
                       {!ic && <span className="truncate">{item.label}</span>}
                     </Link>
                   )
@@ -171,56 +175,68 @@ function AppShellInner({ children, role, fullName, email, brandName, establishme
   }
 
   return (
-    <div className="flex h-screen" style={{ background: 'var(--c-bg)', color: 'var(--c-fg)' }}>
-      <aside className={cn('hidden md:flex flex-col transition-all shrink-0', collapsed ? 'w-16' : 'w-60')} style={{ background: 'var(--c-surface)', borderRight: '1px solid var(--c-border)' }}>
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      {/* Desktop sidebar */}
+      <aside className={cn(
+        'hidden md:flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all shrink-0',
+        collapsed ? 'w-16' : 'w-60',
+      )}>
         <SidebarContent />
       </aside>
+
+      {/* Mobile sidebar */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute left-0 top-0 bottom-0 w-72 flex flex-col shadow-xl" style={{ background: 'var(--c-surface)' }}>
+          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-gray-900 flex flex-col shadow-xl">
             <SidebarContent mobile />
           </aside>
         </div>
       )}
+
+      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 flex items-center justify-between px-4 shrink-0" style={{ background: 'var(--c-surface)', borderBottom: '1px solid var(--c-border)' }}>
+        {/* Top bar */}
+        <header className="h-14 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shrink-0">
           <div className="flex items-center gap-3">
-            <button onClick={() => setMobileOpen(true)} className="md:hidden p-2 -ml-2 rounded-lg" style={{ color: 'var(--c-muted-fg)' }}><Menu size={20} /></button>
+            <button onClick={() => setMobileOpen(true)} className="md:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+              <Menu size={20} />
+            </button>
             <div>
-              <h1 className="text-sm font-semibold" style={{ color: 'var(--c-fg)' }}>{brandName || 'TurnFlow Encargos'}</h1>
-              {subtitle && <p className="text-[11px]" style={{ color: 'var(--c-muted-fg)' }}>{subtitle}</p>}
+              <h1 className="text-sm font-semibold text-gray-900 dark:text-white">{brandName || 'TurnFlow Encargos'}</h1>
+              {subtitle && <p className="text-[11px] text-gray-500 dark:text-gray-400">{subtitle}</p>}
             </div>
           </div>
+
+          {/* Profile */}
           <div className="relative" ref={profileRef}>
-            <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-2 p-1.5 rounded-lg transition-colors">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--c-primary-50)', color: 'var(--c-primary)' }}><UserIcon size={16} /></div>
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium leading-tight" style={{ color: 'var(--c-fg)' }}>{fullName || email}</p>
-                <p className="text-[11px]" style={{ color: 'var(--c-muted-fg)' }}>{roleLabel[role]}</p>
+            <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center text-sky-600 dark:text-sky-400">
+                <UserIcon size={16} />
               </div>
-              <ChevronDown size={14} style={{ color: 'var(--c-muted-fg)' }} />
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-medium text-gray-900 dark:text-white leading-tight">{fullName || email}</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400">{roleLabel[role]}</p>
+              </div>
+              <ChevronDown size={14} className="text-gray-400" />
             </button>
             {profileOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-lg py-1 z-50" style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
-                <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--c-border)' }}>
-                  <p className="text-sm font-medium" style={{ color: 'var(--c-fg)' }}>{fullName || email}</p>
-                  <p className="text-xs" style={{ color: 'var(--c-muted-fg)' }}>{email}</p>
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 py-1 z-50">
+                <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{fullName || email}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{email}</p>
                 </div>
-                <button onClick={toggleDarkMode} className="w-full flex items-center gap-3 px-3 py-2 text-sm" style={{ color: 'var(--c-fg)' }}>
-                  {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-                  <span>{darkMode ? 'Modo claro' : 'Modo oscuro'}</span>
+                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                  <LogOut size={16} />
+                  <span>Cerrar sesión</span>
                 </button>
-                <div className="mt-1 pt-1" style={{ borderTop: '1px solid var(--c-border)' }}>
-                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2 text-sm" style={{ color: 'var(--c-destructive)' }}>
-                    <LogOut size={16} /><span>Cerrar sesión</span>
-                  </button>
-                </div>
               </div>
             )}
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto" style={{ background: 'var(--c-bg)' }}>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-950">
           {children}
         </main>
       </div>
@@ -231,11 +247,9 @@ function AppShellInner({ children, role, fullName, email, brandName, establishme
 function X(props: React.SVGProps<SVGSVGElement> & { size?: number }) {
   return (<svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>)
 }
+
 function UserIcon(props: React.SVGProps<SVGSVGElement> & { size?: number }) {
   return (<svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="8" r="5" /><path d="M20 21a8 8 0 0 0-16 0" /></svg>)
-}
-function CreditCard(props: React.SVGProps<SVGSVGElement> & { size?: number }) {
-  return (<svg xmlns="http://www.w3.org/2000/svg" width={props.size || 24} height={props.size || 24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></svg>)
 }
 
 export default function AppShell(props: AppShellProps) {
