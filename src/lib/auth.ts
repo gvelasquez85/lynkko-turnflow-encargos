@@ -115,6 +115,7 @@ export const auth = betterAuth({
     process.env.VERCEL_BRANCH_URL  ? `https://${process.env.VERCEL_BRANCH_URL}`  : null,
     process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null,
+    'https://encargos.turnflow.com.co',
     'http://localhost:3000',
   ].filter(Boolean) as string[],
 })
