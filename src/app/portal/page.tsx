@@ -1,5 +1,3 @@
-import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
 import { db } from '@/lib/db'
 import { encargos, customers, encargoServices, brands } from '@/lib/db/schema'
 import { eq, and } from '@lynkko/db'
@@ -18,7 +16,7 @@ export default async function ClientPortalPage({
     return <ClientPortal encargo={null} error={null} />
   }
 
-  // Find encargo by code and customer document
+  // Find encargo by code + customer document (inner join enforces document match)
   const [encargoData] = await db
     .select({
       id: encargos.id,
@@ -30,6 +28,7 @@ export default async function ClientPortalPage({
       createdAt: encargos.createdAt,
       readyAt: encargos.readyAt,
       deliveredAt: encargos.deliveredAt,
+      customerId: encargos.customerId,
       customerName: customers.name,
       customerPhone: customers.phone,
       serviceName: encargoServices.name,
@@ -38,14 +37,14 @@ export default async function ClientPortalPage({
       brandLogo: brands.logoUrl,
     })
     .from(encargos)
-    .leftJoin(customers, and(eq(customers.id, encargos.customerId), eq(customers.documentId, doc)))
+    .innerJoin(customers, and(eq(customers.id, encargos.customerId), eq(customers.documentId, doc)))
     .leftJoin(encargoServices, eq(encargoServices.id, encargos.serviceId))
     .leftJoin(brands, eq(brands.id, encargos.brandId))
-    .where(and(eq(encargos.orderCode, code), eq(encargos.brandId, encargos.brandId)))
+    .where(and(eq(encargos.orderCode, code), eq(encargos.status, 'ready')))
     .limit(1)
 
   if (!encargoData) {
-    return <ClientPortal encargo={null} error="No se encontró un encargo con ese código y documento. Verifica los datos e intenta de nuevo." />
+    return <ClientPortal encargo={null} error="No se encontró un encargo con ese código y documento, o el encargo aún no está listo. Verifica los datos e intenta de nuevo." />
   }
 
   return <ClientPortal encargo={encargoData as any} error={null} />

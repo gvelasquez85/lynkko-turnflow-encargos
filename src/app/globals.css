@@ -1,21 +1,84 @@
 @import "tailwindcss";
 
+/* ─── Lynkko Design System v1.0 — CSS Tokens ────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #0a0a0a;
+  /* Primary — Lynkko Green */
+  --primary:           142 72% 29%;
+  --primary-50:        142 72% 96%;
+  --primary-100:       142 72% 90%;
+  --primary-200:       142 72% 80%;
+  --primary-800:       142 72% 29%;
+  --primary-900:       142 72% 14%;
+
+  /* Base */
+  --background:        0 0% 100%;
+  --foreground:        222 47% 11%;
+  --muted:             210 40% 96%;
+  --muted-foreground:  215 16% 47%;
+  --border:            214 32% 91%;
+
+  /* Semantic */
+  --success:           142 71% 45%;
+  --warning:           38 92% 50%;
+  --destructive:       0 84% 60%;
+  --info:              217 91% 60%;
+
+  /* Accent */
+  --accent:            48 96% 53%;
+
+  /* Radius */
+  --radius:            8px;
+
+  /* Resolved hex */
+  --c-primary:         #166534;
+  --c-primary-50:      #f0fdf4;
+  --c-primary-100:     #dcfce7;
+  --c-primary-200:     #bbf7d0;
+  --c-bg:              #ffffff;
+  --c-fg:              #0f172a;
+  --c-muted:           #f1f5f9;
+  --c-muted-fg:        #64748b;
+  --c-border:          #e2e8f0;
+  --c-success:         #16a34a;
+  --c-warning:         #d97706;
+  --c-destructive:     #dc2626;
 }
 
-@theme {
-  --color-brand-50:  #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-brand-900: #1e3a8a;
+/* ─── Dark Mode ─────────────────────────────────────────────────────────────── */
+.dark {
+  --background:        222 47% 11%;
+  --foreground:        210 40% 98%;
+  --muted:             217 33% 18%;
+  --muted-foreground:  215 20% 65%;
+  --border:            217 33% 25%;
+  --c-bg:              #0f172a;
+  --c-fg:              #f8fafc;
+  --c-muted:           #1e293b;
+  --c-muted-fg:        #94a3b8;
+  --c-border:          #334155;
 }
 
+/* ─── Base Styles ───────────────────────────────────────────────────────────── */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--c-bg);
+  color: var(--c-fg);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--c-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--c-muted-fg);
 }
