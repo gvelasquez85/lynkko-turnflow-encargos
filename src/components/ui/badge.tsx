@@ -1,30 +1,28 @@
+// src/components/ui/Badge.tsx
 import { cn } from '@/lib/utils'
 
 interface BadgeProps {
   children: React.ReactNode
-  variant?: 'waiting' | 'in_progress' | 'done' | 'cancelled' | 'default'
+  variant?: 'default' | 'secondary' | 'outline' | 'success' | 'warning' | 'destructive' | 'muted'
   className?: string
 }
 
-const variants = {
-  waiting: 'bg-yellow-100 text-yellow-800',
-  in_progress: 'bg-blue-100 text-blue-800',
-  done: 'bg-green-100 text-green-800',
-  cancelled: 'bg-gray-100 text-gray-600',
-  default: 'bg-indigo-100 text-indigo-800',
-}
-
-const labels: Record<string, string> = {
-  waiting: 'En espera',
-  in_progress: 'En atención',
-  done: 'Atendido',
-  cancelled: 'Cancelado',
+const variants: Record<string, { bg: string; fg: string; border?: string }> = {
+  default:    { bg: 'var(--c-primary)', fg: '#fff' },
+  secondary:  { bg: 'var(--secondary)', fg: '#fff' },
+  outline:    { bg: 'transparent', fg: 'var(--c-fg)', border: 'var(--c-border)' },
+  success:    { bg: 'var(--c-success-bg)', fg: 'var(--c-success-fg)' },
+  warning:    { bg: 'var(--c-warning-bg)', fg: 'var(--c-warning-fg)' },
+  destructive:{ bg: 'var(--c-destructive-bg)', fg: 'var(--c-destructive-fg)' },
+  muted:      { bg: 'var(--c-muted)', fg: 'var(--c-muted-fg)' },
 }
 
 export function Badge({ children, variant = 'default', className }: BadgeProps) {
+  const v = variants[variant]
   return (
-    <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', variants[variant], className)}>
-      {typeof children === 'string' && labels[children] ? labels[children] : children}
+    <span className={cn('inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold', className)}
+      style={{ background: v.bg, color: v.fg, border: v.border ? `1px solid ${v.border}` : 'none' }}>
+      {children}
     </span>
   )
 }
