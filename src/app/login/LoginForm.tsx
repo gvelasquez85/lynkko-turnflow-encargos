@@ -28,7 +28,17 @@ export function LoginForm() {
     })
 
     if (err) {
-      setError(err.message ?? 'Credenciales incorrectas')
+      const msg = err.message ?? 'Credenciales incorrectas'
+      // Translate common Better Auth error messages to Spanish
+      const translations: Record<string, string> = {
+        'Password too short': 'La contraseña es muy corta (mínimo 8 caracteres)',
+        'Invalid email': 'Correo electrónico inválido',
+        'Invalid password': 'Contraseña incorrecta',
+        'Email not found': 'No se encontró una cuenta con ese correo',
+        'Invalid identifier or credentials': 'Credenciales incorrectas',
+        'Account not found': 'No se encontró una cuenta con esas credenciales',
+      }
+      setError(translations[msg] || msg)
       setLoading(false)
       return
     }

@@ -1,24 +1,24 @@
 import { ok, serverError, unauthorized } from '@lynkko/utils'
 import { getContext } from '@/lib/context'
 import { db } from '@/lib/db'
-import { customers } from '@/lib/db/schema'
+import { encargoServices } from '@/lib/db/schema'
 import { eq, asc } from '@lynkko/db'
 
-// GET /api/clientes — List all customers for current brand
+// GET /api/admin/servicios — List all services for current brand
 export async function GET() {
   try {
     const ctx = await getContext()
 
-    const customersList = await db
+    const services = await db
       .select()
-      .from(customers)
-      .where(eq(customers.brandId, ctx.brandId))
-      .orderBy(asc(customers.name))
+      .from(encargoServices)
+      .where(eq(encargoServices.brandId, ctx.brandId))
+      .orderBy(asc(encargoServices.sortOrder))
 
-    return ok(customersList)
+    return ok(services)
   } catch (err) {
     if (err instanceof Error && err.message === 'No autenticado') return unauthorized()
-    console.error('Error fetching customers:', err)
+    console.error('Error fetching services:', err)
     return serverError()
   }
 }

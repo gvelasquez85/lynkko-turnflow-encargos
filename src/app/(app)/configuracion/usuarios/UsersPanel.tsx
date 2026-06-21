@@ -249,19 +249,20 @@ export function UsersPanel({
                   <option value="">Sin sucursal asignada</option>
                   {establishments.map(e => {
                     const count = estUserCounts[e.id] ?? 0
-                    const atLimit = count >= 2 && availableExtraSlots <= 0
+                    const limit = maxAdvisors ?? 1
+                    const atLimit = count >= limit && availableExtraSlots <= 0
                     return (
                       <option key={e.id} value={e.id} disabled={atLimit}>
-                        {e.name} — {count}/2 usuarios{count >= 2 ? ' (lleno)' : ''}
+                        {e.name} — {count}/{limit} usuarios{count >= limit ? ' (lleno)' : ''}
                       </option>
                     )
                   })}
                 </Select>
-                {form.establishmentId && (estUserCounts[form.establishmentId] ?? 0) >= 2 && (
+                {form.establishmentId && (estUserCounts[form.establishmentId] ?? 0) >= (maxAdvisors ?? 1) && (
                   <div className="mt-2 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
                     <AlertTriangle size={13} className="mt-0.5 shrink-0 text-amber-500" />
                     <span>
-                      Esta sucursal ya tiene los 2 usuarios incluidos.{' '}
+                      Esta sucursal ya tiene los {maxAdvisors ?? 1} usuarios incluidos.{' '}
                       {availableExtraSlots > 0
                         ? `Tienes ${availableExtraSlots} slot${availableExtraSlots !== 1 ? 's' : ''} adicional${availableExtraSlots !== 1 ? 'es' : ''} disponible${availableExtraSlots !== 1 ? 's' : ''}.`
                         : <><a href="/configuracion/marca?tab=membership" className="underline font-semibold">Amplía tu capacidad</a> para agregar más.</>

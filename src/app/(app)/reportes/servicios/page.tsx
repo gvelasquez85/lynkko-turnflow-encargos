@@ -3,31 +3,39 @@ import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { encargos, customers, encargoServices } from '@/lib/db/schema'
-import { eq, desc, count, sum, gte } from '@lynkko/db'
+import { eq, desc, count, sum, gte, asc } from '@lynkko/db'
 import { getContext } from '@/lib/context'
 import { subDays } from 'date-fns'
-
 export default async function ReportesServiciosPage() {
   const ctx = await getContext()
   const thirtyDaysAgo = subDays(new Date(), 30)
 
-  // Get all encargos with status breakdown
+  // Get all encargos
   const allEncargos = await db
     .select({
       id: encargos.id,
       orderCode: encargos.orderCode,
+      itemDescription: encargos.itemDescription,
       status: encargos.status,
       price: encargos.price,
       createdAt: encargos.createdAt,
       promisedDate: encargos.promisedDate,
       customerName: customers.name,
       serviceName: encargoServices.name,
+      serviceId: encargos.serviceId,
     })
     .from(encargos)
     .leftJoin(customers, eq(customers.id, encargos.customerId))
     .leftJoin(encargoServices, eq(encargoServices.id, encargos.serviceId))
     .where(eq(encargos.brandId, ctx.brandId))
     .orderBy(desc(encargos.createdAt))
+
+  // Get services for filter
+  const services = await db
+    .select({ id: encargoServices.id, name: encargoServices.name })
+    .from(encargoServices)
+    .where(eq(encargoServices.brandId, ctx.brandId))
+    .orderBy(asc(encargoServices.name))
 
   // Status breakdown
   const statusCounts = {
@@ -42,7 +50,7 @@ export default async function ReportesServiciosPage() {
     .filter(e => e.status === 'delivered' || e.status === 'ready')
     .reduce((sum, e) => sum + parseFloat(e.price || '0'), 0)
 
-  const recentEncargos = allEncargos.filter(e => 
+  const recentEncargos = allEncargos.filter(e =>
     e.createdAt && new Date(e.createdAt) >= thirtyDaysAgo
   )
 
@@ -50,6 +58,48 @@ export default async function ReportesServiciosPage() {
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">Reportes de Servicios</h1>
       <p className="text-sm text-gray-500 mb-6">Métricas de encargos por estado</p>
+
+      {/* Filters */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">Desde</label>
+            <input
+              type="date"
+              defaultValue={thirtyDaysAgo.toISOString().split('T')[0]}
+              className="text-sm rounded-lg border border-gray-200 px-3 py-1.5 focus:border-indigo-500 focus:outline-none"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">Hasta</label>
+            <input
+              type="date"
+              defaultValue={new Date().toISOString().split('T')[0]}
+              className="text-sm rounded-lg border border-gray-200 px-3 py-1.5 focus:border-indigo-500 focus:outline-none"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">Servicio</label>
+            <select className="text-sm rounded-lg border border-gray-200 px-3 py-1.5 focus:border-indigo-500 focus:outline-none">
+              <option value="">Todos los servicios</option>
+              {services.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">Estado</label>
+            <select className="text-sm rounded-lg border border-gray-200 px-3 py-1.5 focus:border-indigo-500 focus:outline-none">
+              <option value="">Todos</option>
+              <option value="received">Recibido</option>
+              <option value="in_progress">En proceso</option>
+              <option value="ready">Listo</option>
+              <option value="delivered">Entregado</option>
+              <option value="cancelled">Cancelado</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

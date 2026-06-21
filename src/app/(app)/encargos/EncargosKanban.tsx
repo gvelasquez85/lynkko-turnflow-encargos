@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Package, Clock, CheckCircle2, Truck, AlertCircle, Plus, ChevronRight, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -32,6 +32,46 @@ const COLUMNS = [
 export default function EncargosKanban({ encargos: initialEncargos }: EncargosKanbanProps) {
   const [encargos, setEncargos] = useState(initialEncargos)
   const [showNew, setShowNew] = useState(false)
+  const [newForm, setNewForm] = useState({
+    itemDescription: '',
+    price: '',
+    serviceId: '',
+    customerId: '',
+    promisedDate: '',
+    notifyWhatsapp: true,
+  })
+  const [saving, setSaving] = useState(false)
+  const [services, setServices] = useState<{ id: string; name: string }[]>([])
+  const [customers, setCustomers] = useState<{ id: string; name: string }[]>([])
+
+  // Load services and customers on mount
+  useEffect(() => {
+    fetch('/api/admin/servicios').then(r => r.json()).then(d => setServices(d || [])).catch(() => {})
+    fetch('/api/clientes').then(r => r.json()).then(d => setCustomers(d || [])).catch(() => {})
+  }, [])
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newForm.itemDescription || !newForm.price) return
+    setSaving(true)
+    try {
+      const res = await fetch('/api/encargos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newForm),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setEncargos(prev => [data, ...prev])
+        setShowNew(false)
+        setNewForm({ itemDescription: '', price: '', serviceId: '', customerId: '', promisedDate: '', notifyWhatsapp: true })
+      }
+    } catch (err) {
+      console.error('Error creating encargo:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function formatPrice(price: string) {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(parseFloat(price))
@@ -129,6 +169,102 @@ export default function EncargosKanban({ encargos: initialEncargos }: EncargosKa
           )
         })}
       </div>
+
+      {/* New encargo modal */}
+      {showNew && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowNew(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Nuevo encargo</h2>
+            <form onSubmit={handleCreate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción del artículo</label>
+                <input
+                  type="text"
+                  value={newForm.itemDescription}
+                  onChange={e => setNewForm(f => ({ ...f, itemDescription: e.target.value }))}
+                  placeholder="Ej: Camisa de vestir"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:border-indigo-500 focus:outline-none"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio (COP)</label>
+                  <input
+                    type="number"
+                    value={newForm.price}
+                    onChange={e => setNewForm(f => ({ ...f, price: e.target.value }))}
+                    placeholder="15000"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:border-indigo-500 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fecha estimada</label>
+                  <input
+                    type="date"
+                    value={newForm.promisedDate}
+                    onChange={e => setNewForm(f => ({ ...f, promisedDate: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:border-indigo-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Servicio</label>
+                <select
+                  value={newForm.serviceId}
+                  onChange={e => setNewForm(f => ({ ...f, serviceId: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:border-indigo-500 focus:outline-none"
+                >
+                  <option value="">Seleccionar servicio</option>
+                  {services.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                <select
+                  value={newForm.customerId}
+                  onChange={e => setNewForm(f => ({ ...f, customerId: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:border-indigo-500 focus:outline-none"
+                >
+                  <option value="">Seleccionar cliente</option>
+                  {customers.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={newForm.notifyWhatsapp}
+                  onChange={e => setNewForm(f => ({ ...f, notifyWhatsapp: e.target.checked }))}
+                  className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-700">Notificar por WhatsApp cuando esté listo</span>
+              </label>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNew(false)}
+                  className="flex-1 px-4 py-2 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || !newForm.itemDescription || !newForm.price}
+                  className="flex-1 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {saving ? 'Creando...' : 'Crear encargo'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
