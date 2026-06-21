@@ -3,8 +3,8 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'Turnflow by Lynkko',
-    template: '%s | Turnflow',
+    default: 'Turnflow Encargos by Lynkko',
+    template: '%s | Turnflow Encargos',
   },
   description: 'Plataforma de gestión de encargos para negocios de sastrería, tintorería, zapatería y más',
 }
@@ -17,6 +17,9 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -34,7 +37,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased">
+      <body style={{ background: 'var(--c-bg)', color: 'var(--c-fg)', fontFamily: "'Inter', system-ui, -apple-system, sans-serif", margin: 0, WebkitFontSmoothing: 'antialiased' }}>
         {children}
       </body>
     </html>

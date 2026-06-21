@@ -29,7 +29,6 @@ export function LoginForm() {
 
     if (err) {
       const msg = err.message ?? 'Credenciales incorrectas'
-      // Translate common Better Auth error messages to Spanish
       const translations: Record<string, string> = {
         'Password too short': 'La contraseña es muy corta (mínimo 8 caracteres)',
         'Invalid email': 'Correo electrónico inválido',
@@ -49,92 +48,110 @@ export function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 to-indigo-700 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 100%)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 'var(--space-4)',
+    }}>
+      <div style={{ width: '100%', maxWidth: 384 }}>
         {/* Logo */}
-        <div className="text-center mb-8">
-          <p className="text-2xl font-bold text-white">Turnflow</p>
-          <p className="text-indigo-300 text-sm mt-1">by Lynkko</p>
+        <div style={{ textAlign: 'center', marginBottom: 'var(--space-8)' }}>
+          <p style={{ fontSize: 28, fontWeight: 700, color: '#fff', margin: 0 }}>Turnflow</p>
+          <p style={{ fontSize: 14, color: '#7dd3fc', marginTop: 4 }}>Encargos by Lynkko</p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-3xl shadow-2xl p-8 flex flex-col gap-5"
-        >
+        <form onSubmit={handleSubmit} style={{
+          background: 'var(--c-surface)',
+          borderRadius: 'var(--radius-xl)',
+          boxShadow: 'var(--shadow-lg)',
+          padding: 'var(--space-8)',
+          display: 'flex', flexDirection: 'column', gap: 'var(--space-5)',
+        }}>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Iniciar sesión</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Accede a tu cuenta de Turnflow</p>
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--c-fg)', margin: 0 }}>Iniciar sesión</h1>
+            <p style={{ fontSize: 14, color: 'var(--c-muted-fg)', marginTop: 2 }}>Accede a tu cuenta de Turnflow</p>
           </div>
 
           {setupDone && (
-            <p className="rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-700">
+            <div style={{
+              borderRadius: 'var(--radius-lg)', background: 'var(--c-success-bg)',
+              border: '1px solid var(--c-success-fg)', padding: 'var(--space-3)',
+              fontSize: 14, color: 'var(--c-success-fg)',
+            }}>
               ¡Negocio configurado! Inicia sesión para continuar.
-            </p>
+            </div>
           )}
 
           {/* Email */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">Correo electrónico</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--c-fg)' }}>Correo electrónico</label>
             <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="correo@empresa.com"
-              required
-              autoComplete="email"
-              className="rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              type="email" value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="correo@empresa.com" required autoComplete="email"
+              style={{
+                borderRadius: 'var(--radius-lg)', border: '1px solid var(--c-border)',
+                padding: 'var(--space-2) var(--space-3)', fontSize: 14,
+                background: 'var(--c-surface)', color: 'var(--c-fg)',
+                outline: 'none',
+              }}
             />
           </div>
 
           {/* Password */}
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">Contraseña</label>
-              <Link
-                href="/forgot-password"
-                className="text-xs text-indigo-600 hover:text-indigo-700"
-              >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--c-fg)' }}>Contraseña</label>
+              <Link href="/forgot-password" style={{ fontSize: 12, color: 'var(--c-primary)', textDecoration: 'none' }}>
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
-            <div className="relative">
+            <div style={{ position: 'relative' }}>
               <input
-                type={show ? 'text' : 'password'}
-                value={password}
+                type={show ? 'text' : 'password'} value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                autoComplete="current-password"
-                className="block w-full rounded-xl border border-gray-300 px-3.5 py-2.5 pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                placeholder="••••••••" required autoComplete="current-password"
+                style={{
+                  width: '100%', borderRadius: 'var(--radius-lg)',
+                  border: '1px solid var(--c-border)', padding: 'var(--space-2) var(--space-3)',
+                  paddingRight: 40, fontSize: 14,
+                  background: 'var(--c-surface)', color: 'var(--c-fg)',
+                  outline: 'none', boxSizing: 'border-box',
+                }}
               />
-              <button
-                type="button"
-                onClick={() => setShow(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
+              <button type="button" onClick={() => setShow(v => !v)} style={{
+                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', color: 'var(--c-muted-fg)', cursor: 'pointer',
+              }}>
                 {show ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
 
           {error && (
-            <p className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
+            <div style={{
+              borderRadius: 'var(--radius-lg)', background: 'var(--c-destructive-bg)',
+              border: '1px solid var(--c-destructive-fg)', padding: 'var(--space-3)',
+              fontSize: 14, color: 'var(--c-destructive-fg)',
+            }}>
               {error}
-            </p>
+            </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60"
-          >
-            {loading && <Loader2 size={15} className="animate-spin" />}
+          <button type="submit" disabled={loading} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-2)',
+            borderRadius: 'var(--radius-lg)', background: 'var(--c-primary)',
+            padding: 'var(--space-3)', fontSize: 14, fontWeight: 600,
+            color: '#fff', border: 'none', cursor: 'pointer',
+            opacity: loading ? 0.6 : 1,
+          }}>
+            {loading && <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} />}
             {loading ? 'Ingresando...' : 'Iniciar sesión'}
           </button>
 
-          <p className="text-center text-xs text-gray-500">
+          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--c-muted-fg)', margin: 0 }}>
             ¿No tienes cuenta?{' '}
-            <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">
+            <Link href="/register" style={{ color: 'var(--c-primary)', fontWeight: 500, textDecoration: 'none' }}>
               Regístrate
             </Link>
           </p>
